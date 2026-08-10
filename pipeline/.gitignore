@@ -1,0 +1,105 @@
+# Secrets
+.env
+.env.local
+.env.*
+!.env.example
+.bionico/
+.mcp.json
+.dev.vars
+*.pem
+*.key
+*credentials*.json
+service-account*.json
+*.secret.md
+*.secret.txt
+
+# Python caches and build outputs
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.tox/
+.pytest_cache/
+
+# Node dependency caches
+node_modules/
+package-lock.json
+
+# Run artifacts and local workflow state
+runs/*
+cuts/
+animated_runs/
+outputs/
+output_long/
+output_short/
+inbox/
+output/
+
+# Generated Remotion runtime artifacts
+src/contenido_bionico/shared/remotion/.remotion/
+src/contenido_bionico/shared/remotion/out/
+src/contenido_bionico/shared/remotion/public/assets/*
+!src/contenido_bionico/shared/remotion/public/assets/fonts/
+src/contenido_bionico/shared/remotion/src/Compositions.generated.ts
+src/contenido_bionico/shared/remotion/src/runs/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs and local agent state
+*.log
+logs/
+.claude/*
+!.claude/settings.json
+.codex/
+*.jsonl
+
+# Media files are intentionally omitted from source deployment.
+*.mp4
+*.mp4.*
+*.mov
+*.mov.*
+*.m4v
+*.m4v.*
+*.webm
+*.webm.*
+*.mp3
+*.mp3.*
+*.wav
+*.wav.*
+*.m4a
+*.m4a.*
+*.flac
+*.flac.*
+*.ogg
+*.ogg.*
+*.png
+*.png.*
+# The committed brand quote-post template is a real source asset, not run output.
+!src/contenido_bionico/shared/quote-template/*.png
+*.jpg
+*.jpg.*
+*.jpeg
+*.jpeg.*
+*.gif
+*.gif.*
+
+# Standard pipeline audio assets must be committed with the repo.
+!audio_library/
+!audio_library/**
+audio_library/.DS_Store
+audio_library/**/.DS_Store
+# Runtime sidecars written into the audio library (loudness measurements,
+# recent music picks) — never source assets.
+audio_library/.loudness_cache.json
+audio_library/.recent_picks.json

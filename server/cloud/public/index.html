@@ -1,0 +1,1190 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CONTENIDO BIONICO</title>
+<style>
+  :root { color-scheme: dark; }
+  body { font: 16px/1.5 system-ui, sans-serif; background:#111418; color:#e8e6e3; max-width:820px; margin:2rem auto; padding:0 1rem; }
+  h1 { font-size:1.6rem; letter-spacing:.06em; font-weight:800; text-align:center; margin:.2rem 0 1.2rem; }
+  .card { background:#1a1f26; border:1px solid #2a313b; border-radius:10px; padding:1rem; margin:.8rem 0; }
+  input[type=password], input[type=file], textarea, select { width:100%; margin:.4rem 0; }
+  textarea { background:#111418; color:#e8e6e3; border:1px solid #2a313b; border-radius:8px; padding:.5rem; font:inherit; box-sizing:border-box; }
+  select { background:#111418; color:#e8e6e3; border:1px solid #2a313b; border-radius:8px; padding:.45rem; font:inherit; }
+  button { background:#2f6feb; color:#fff; border:0; border-radius:8px; padding:.55rem 1rem; font-size:1rem; cursor:pointer; }
+  button.small { padding:.3rem .7rem; font-size:.85rem; }
+  button.ghost { background:#2a313b; }
+  button.danger { background:#5a2626; }
+  button:disabled { opacity:.5; cursor:default; }
+  progress { width:100%; height:8px; }
+  table { width:100%; border-collapse:collapse; }
+  td, th { padding:.45rem .3rem; border-bottom:1px solid #2a313b; text-align:left; font-size:.92rem; }
+  tr.sub td { border-bottom:1px solid #2a313b; background:#161b21; }
+  .jobcard { background:#1a1f26; border:1px solid #2a313b; border-radius:10px; padding:.7rem .9rem; margin:.7rem 0; }
+  .cardhead { font-weight:700; font-size:.98rem; margin:.1rem 0 .35rem; overflow-wrap:anywhere; }
+  .cardhead .vcount { color:#9fb0c3; font-weight:400; font-size:.8rem; margin-left:.3rem; }
+  .vlabel { font-weight:600; }
+  .toks .u { color:#6b7a8d; font-size:.82em; margin-left:.1rem; }
+  .jobcard table tr:last-child td { border-bottom:0; }
+  .group { margin:.25rem 0; display:flex; flex-wrap:wrap; gap:.35rem; align-items:center; }
+  .group b { min-width:5.2rem; font-weight:600; font-size:.85rem; color:#9fb0c3; }
+  .group a { text-decoration:none; }
+  .st { padding:.1rem .5rem; border-radius:99px; font-size:.8rem; white-space:nowrap; }
+  .st-queued, .st-uploading { background:#3b3f2a; } .st-claimed, .st-processing, .st-publishing { background:#2a3b4f; }
+  .st-done { background:#234f2a; } .st-failed { background:#5a2626; } .st-canceled { background:#3a3a3a; }
+  .st-rejected { background:#5a4a26; }
+  .err { color:#ff9d9d; font-size:.8rem; white-space:pre-wrap; }
+  .rejnote { color:#e6c069; font-size:.85rem; margin:.2rem 0; white-space:pre-wrap; }
+  .friendly { color:#ff9d9d; font-size:.85rem; }
+  .errbox details { margin:.15rem 0; }
+  .errbox summary { cursor:pointer; color:#9fb0c3; font-size:.78rem; }
+  .errbox pre { margin:.25rem 0 0; max-height:180px; overflow:auto; }
+  .hint { color:#9fb0c3; font-size:.78rem; margin:.6rem 0 0; }
+  .savedflash { color:#7fd18a; font-size:.78rem; margin-left:.5rem; text-transform:none; letter-spacing:0; opacity:0; transition:opacity .3s; }
+  .savedflash.on { opacity:1; }
+  .chips { display:flex; flex-wrap:wrap; gap:.35rem; margin:.1rem 0 .3rem; }
+  .chips button { background:#2a313b; font-size:.8rem; padding:.25rem .6rem; border-radius:99px; }
+  .charcount { color:#6b7a8d; font-size:.75rem; text-align:right; margin:.1rem 0 .3rem; }
+  .vinstr { color:#9fb0c3; font-size:.8rem; margin-top:.15rem; overflow-wrap:anywhere; }
+  .vinstr summary { cursor:pointer; }
+  .uprow .err { flex:0 1 auto; }
+  .size { color:#9fb0c3; font-size:.82rem; }
+  .toks { color:#9fb0c3; }
+  #login.hidden, #app.hidden, #modal.hidden, #confirmModal.hidden, #previewModal.hidden { display:none; }
+  #modal, #confirmModal, #previewModal { position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; padding:1rem; z-index:50; }
+  #modal .card, #confirmModal .card { width:100%; max-width:480px; margin:0; }
+  #previewModal .card { width:100%; max-width:640px; margin:0; }
+  #previewModal video, #previewModal img { width:100%; max-height:70vh; border-radius:8px; background:#000; display:block; }
+  #previewModal pre { max-height:60vh; overflow:auto; background:#111418; border:1px solid #2a313b; border-radius:8px; padding:.7rem; white-space:pre-wrap; word-break:break-word; }
+  .grid { margin:.25rem 0; display:flex; flex-wrap:wrap; gap:.35rem; }
+  details.cat { margin:.3rem 0; border:1px solid #2a313b; border-radius:8px; padding:.3rem .6rem; background:#161b21; }
+  details.cat summary { cursor:pointer; font-size:.88rem; font-weight:600; color:#c7d1dc; }
+  details.cat .grid { margin:.4rem 0 .15rem; }
+  .packlink { color:#7fb3ff; font-size:.8rem; font-weight:400; text-decoration:none; }
+  .packlink:hover { text-decoration:underline; }
+  .ssnav { display:flex; gap:.6rem; align-items:center; justify-content:center; margin-top:.5rem; color:#c7d1dc; font-size:.9rem; }
+  .settings-grid { display:flex; flex-wrap:wrap; gap:.9rem 1.4rem; align-items:center; }
+  .chk { display:flex; align-items:center; gap:.35rem; font-size:.9rem; white-space:nowrap; }
+  .chk input:disabled + span, .setrow select:disabled { opacity:.5; }
+  .seclbl { font-size:.72rem; color:#9fb0c3; letter-spacing:.03em; text-transform:uppercase; margin:0 0 .45rem; }
+  .seclbl.gap { margin-top:.95rem; }
+  header.top { display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin-bottom:.2rem; }
+  header.top .spacer { flex:1; }
+  .meters { display:flex; gap:.7rem; align-items:center; }
+  .meter { display:flex; flex-direction:column; gap:.15rem; align-items:flex-start; }
+  .meter .lbl { font-size:.7rem; color:#9fb0c3; white-space:nowrap; }
+  .meter .bar { width:52px; height:6px; border-radius:99px; background:#2a313b; overflow:hidden; }
+  .meter .bar > i { display:block; height:100%; background:#2f6feb; }
+  .meter .pct { font-size:.72rem; color:#c7d1dc; }
+  .uprow { display:flex; align-items:center; gap:.5rem; padding:.25rem 0; }
+  .uprow .name { flex:1; font-size:.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .uprow button.x { background:#2a313b; padding:.1rem .5rem; font-size:.8rem; line-height:1.2; border-radius:6px; }
+  .setrow { display:flex; align-items:center; gap:.7rem; }
+  .setrow label { font-weight:600; font-size:.92rem; white-space:nowrap; }
+  .setrow select { width:auto; flex:0 0 auto; }
+</style>
+</head>
+<body>
+
+<div id="login" class="card hidden">
+  <h1>CONTENIDO BIONICO</h1>
+  <input type="password" id="pw" autocomplete="current-password">
+  <button onclick="doLogin()">Entrar</button>
+  <p id="loginmsg" class="err"></p>
+</div>
+
+<div id="app" class="hidden">
+  <header class="top">
+    <div class="spacer"></div>
+    <h1 style="margin:0">CONTENIDO BIONICO</h1>
+    <div class="spacer" style="display:flex; justify-content:flex-end; align-items:center; gap:.6rem">
+      <div id="meters" class="meters"></div>
+      <button class="small ghost" id="restartbtn" hidden onclick="doRestartServer()">Reiniciar servidor</button>
+      <button class="small ghost" onclick="doLogout()">Salir</button>
+    </div>
+  </header>
+
+  <div class="card">
+    <input type="file" id="file" accept=".mp4,.mov,.m4v,video/mp4,video/quicktime" multiple hidden onchange="onFilesPicked()">
+    <button onclick="$('file').click()" id="upbtn">Subir videos</button>
+    <div id="upqueue"></div>
+    <progress id="prog" value="0" max="100" hidden></progress>
+    <div id="upfooter"></div>
+    <p id="upmsg" class="err"></p>
+  </div>
+
+  <div class="card">
+    <div class="seclbl">Video <span id="savedflash" class="savedflash">Guardado</span></div>
+    <div class="settings-grid">
+      <label class="chk"><input type="checkbox" id="ftCaptions" checked onchange="onSettingsChange()"><span>Subtítulos</span></label>
+      <label class="chk"><input type="checkbox" id="ftCamera" checked onchange="onSettingsChange()"><span>Cámara</span></label>
+      <label class="chk"><input type="checkbox" id="ftAnimations" checked onchange="onSettingsChange()"><span>Animaciones</span></label>
+      <label class="chk"><input type="checkbox" id="ftMusic" checked onchange="onSettingsChange()"><span>Música</span></label>
+      <label class="chk"><input type="checkbox" id="ftSfx" checked onchange="onSettingsChange()"><span>Efectos de sonido</span></label>
+    </div>
+    <div class="settings-grid" style="margin-top:.6rem">
+      <div class="setrow">
+        <label>Calidad de animación</label>
+        <select id="animq" onchange="onSettingsChange()">
+          <option value="low">Baja</option>
+          <option value="mid">Media</option>
+          <option value="high">Alta</option>
+          <option value="max">Máxima</option>
+        </select>
+      </div>
+      <div class="setrow">
+        <label>Cantidad de animaciones</label>
+        <select id="animcount" onchange="onSettingsChange()">
+          <option value="few">Pocas</option>
+          <option value="default">Normal</option>
+          <option value="max">Máximas</option>
+        </select>
+      </div>
+    </div>
+    <div class="seclbl gap">Entregables</div>
+    <div class="settings-grid">
+      <label class="chk"><input type="checkbox" id="ftCarousel" checked onchange="onSettingsChange()"><span>Carrusel</span></label>
+      <label class="chk"><input type="checkbox" id="ftQuotes" checked onchange="onSettingsChange()"><span>Frases para publicar</span></label>
+    </div>
+    <div class="seclbl gap">Formatos</div>
+    <div class="settings-grid">
+      <label class="chk"><input type="checkbox" id="ftVideosExtra" checked onchange="onSettingsChange()"><span>Videos extra</span></label>
+      <label class="chk"><input type="checkbox" id="ftVideoCarruseles" checked onchange="onSettingsChange()"><span>Video-carruseles</span></label>
+      <label class="chk"><input type="checkbox" id="ftCarruselesExtra" checked onchange="onSettingsChange()"><span>Carruseles extra</span></label>
+      <label class="chk"><input type="checkbox" id="ftImagenes" checked onchange="onSettingsChange()"><span>Imágenes</span></label>
+      <label class="chk"><input type="checkbox" id="ftPosters" checked onchange="onSettingsChange()"><span>Pósters</span></label>
+      <label class="chk"><input type="checkbox" id="ftTextos" checked onchange="onSettingsChange()"><span>Textos</span></label>
+    </div>
+    <p class="hint">Se aplica a los próximos videos que subas.</p>
+    <p id="setmsg" class="err" hidden></p>
+  </div>
+
+  <div id="cards"></div>
+  <div id="bulkbar" class="card" hidden>
+    <button class="small danger" onclick="openConfirmDeleteAll()">Borrar todo</button>
+  </div>
+</div>
+
+<div id="modal" class="hidden">
+  <div class="card">
+    <p id="modaltitle" style="margin-top:0; font-weight:600"></p>
+    <div class="chips">
+      <button type="button" onclick="fillChange('Quita la música de fondo')">Quitar música</button>
+      <button type="button" onclick="fillChange('Haz los subtítulos más grandes')">Subtítulos más grandes</button>
+      <button type="button" onclick="fillChange('Usa menos animaciones')">Menos animaciones</button>
+      <button type="button" onclick="fillChange('Corta la parte del inicio')">Cortar el inicio</button>
+    </div>
+    <textarea id="notes" rows="4" maxlength="2000" oninput="updateNotesCount()"
+      placeholder="Escribe qué quieres cambiar. Ej.: quita la música de fondo · haz los subtítulos más grandes · corta la parte del inicio"></textarea>
+    <div id="notescount" class="charcount">0/2000</div>
+    <div style="display:flex; gap:.5rem">
+      <button onclick="sendChanges()" id="sendbtn">Enviar</button>
+      <button class="ghost" onclick="closeChanges()">Cancelar</button>
+    </div>
+    <p id="modalmsg" class="err"></p>
+  </div>
+</div>
+
+<div id="confirmModal" class="hidden">
+  <div class="card">
+    <p id="confirmmsgtext" style="margin-top:0; font-weight:600"></p>
+    <div style="display:flex; gap:.5rem">
+      <button class="danger" onclick="confirmYes()" id="confirmyesbtn">Sí</button>
+      <button class="ghost" onclick="closeConfirm()">No</button>
+    </div>
+    <p id="confirmmsg" class="err"></p>
+  </div>
+</div>
+
+<div id="previewModal" class="hidden">
+  <div class="card">
+    <p id="previewtitle" style="margin-top:0; font-weight:600"></p>
+    <div id="previewbody"></div>
+    <div style="display:flex; gap:.5rem; margin-top:.6rem">
+      <button id="previewdlbtn" class="ghost" onclick="downloadPreview()">Descargar</button>
+      <button id="previewchgbtn" onclick="previewChanges()" hidden>Cambios…</button>
+      <button class="ghost" onclick="closePreview()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replaceAll("&", "&amp;").replaceAll("<", "&lt;");
+
+function fmtBytes(n) {
+  if (n == null || !Number.isFinite(n)) return "";
+  if (n < 1024) return n + " B";
+  const units = ["KB", "MB", "GB"];
+  let v = n / 1024, i = 0;
+  while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+  return v.toFixed(1) + " " + units[i];
+}
+
+function fmtTokens(n) {
+  if (n == null || !Number.isFinite(n)) return "";
+  if (n < 1000) return String(n);
+  if (n < 1000000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "k";
+  return (n / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
+}
+
+function fmtElapsed(ms) {
+  if (ms < 0) ms = 0;
+  const s = Math.floor(ms / 1000);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const mm = String(m).padStart(2, "0");
+  const ss = String(sec).padStart(2, "0");
+  return h > 0 ? `${h}:${mm}:${ss}` : `${m}:${ss}`;
+}
+
+async function api(path, opts) {
+  const res = await fetch(path, opts);
+  if (res.status === 401) { show(false); throw new Error("unauthorized"); }
+  return res;
+}
+
+function show(loggedIn) {
+  $("login").classList.toggle("hidden", loggedIn);
+  $("app").classList.toggle("hidden", !loggedIn);
+}
+
+async function doLogin() {
+  const res = await fetch("/api/login", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password: $("pw").value }),
+  });
+  if (!res.ok) { $("loginmsg").textContent = "Contraseña incorrecta."; return; }
+  // Feature-detect the admin claim (interface: login response may carry admin:true).
+  let data = {};
+  try { data = await res.json(); } catch {}
+  setAdmin(data && data.admin === true);
+  $("pw").value = ""; show(true); refresh(); loadSettings(); startTimers();
+}
+
+async function doLogout() {
+  try { await fetch("/api/logout", { method: "POST" }); } catch {}
+  setAdmin(false);
+  show(false);
+}
+
+// ---------- admin gating (operator internals hidden for creators) ----------
+
+function isAdmin() { return localStorage.getItem("cb_admin") === "1"; }
+
+function setAdmin(v) {
+  try { v ? localStorage.setItem("cb_admin", "1") : localStorage.removeItem("cb_admin"); } catch {}
+  applyAdminUI();
+}
+
+function applyAdminUI() {
+  const adm = isAdmin();
+  $("restartbtn").hidden = !adm;
+  if (!adm) $("meters").innerHTML = "";
+}
+
+// ---------- settings / quality ----------
+
+function updateFeatureLocks() {
+  const on = $("ftAnimations").checked;
+  $("animq").disabled = !on;
+  $("animcount").disabled = !on;
+}
+
+async function loadSettings() {
+  try {
+    const s = await (await api("/api/settings")).json();
+    $("animq").value = s.anim_quality || "mid";
+    $("animcount").value = s.anim_count || "default";
+    const f = s.features || {};
+    $("ftCaptions").checked = f.captions !== false;
+    $("ftCamera").checked = f.camera !== false;
+    $("ftAnimations").checked = f.animations !== false;
+    $("ftMusic").checked = f.music !== false;
+    $("ftSfx").checked = f.sfx !== false;
+    $("ftCarousel").checked = f.carousel !== false;
+    $("ftQuotes").checked = f.quotes !== false;
+    $("ftVideosExtra").checked = f.videos_extra !== false;
+    $("ftVideoCarruseles").checked = f.video_carruseles !== false;
+    $("ftCarruselesExtra").checked = f.carruseles_extra !== false;
+    $("ftImagenes").checked = f.imagenes !== false;
+    $("ftPosters").checked = f.posters !== false;
+    $("ftTextos").checked = f.textos !== false;
+    updateFeatureLocks();
+    renderMeters(s.usage_metrics);
+  } catch {}
+}
+
+async function onSettingsChange() {
+  updateFeatureLocks();
+  const body = {
+    anim_quality: $("animq").value,
+    anim_count: $("animcount").value,
+    features: {
+      captions: $("ftCaptions").checked,
+      camera: $("ftCamera").checked,
+      animations: $("ftAnimations").checked,
+      music: $("ftMusic").checked,
+      sfx: $("ftSfx").checked,
+      carousel: $("ftCarousel").checked,
+      quotes: $("ftQuotes").checked,
+      videos_extra: $("ftVideosExtra").checked,
+      video_carruseles: $("ftVideoCarruseles").checked,
+      carruseles_extra: $("ftCarruselesExtra").checked,
+      imagenes: $("ftImagenes").checked,
+      posters: $("ftPosters").checked,
+      textos: $("ftTextos").checked,
+    },
+  };
+  try {
+    const res = await api("/api/settings", {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) {
+      flashSaved();
+      $("setmsg").hidden = true;
+    } else {
+      // Non-admin session. (Owner fallback: with no OPERATOR_ADMIN_PASSWORD_HASH
+      // set, the owner login carries admin:true, so only real non-admins land here.)
+      $("setmsg").textContent = "Solo el operador puede cambiar esto";
+      $("setmsg").hidden = false;
+      loadSettings(); // revert the controls to the server's values
+    }
+  } catch {}
+}
+
+let savedTimer = null;
+function flashSaved() {
+  const el = $("savedflash");
+  el.classList.add("on");
+  clearTimeout(savedTimer);
+  savedTimer = setTimeout(() => el.classList.remove("on"), 1600);
+}
+
+const ISO_OK = /^[0-9T:.+\-Z]+$/i;
+const DIAS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+
+function fmtCountdown(iso) {
+  const t = new Date(iso).getTime() - Date.now();
+  return fmtElapsed(Math.max(0, t));
+}
+
+function fmtDayTime(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return "";
+  return `${DIAS[d.getDay()]} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+function renderMeters(m) {
+  const el = $("meters");
+  if (!isAdmin()) { el.innerHTML = ""; return; }
+  if (!m || !m.reported_at || (Date.now() - m.reported_at) >= 30 * 60 * 1000) {
+    el.innerHTML = "";
+    return;
+  }
+  const bar = (pct) => `<div class="bar"><i style="width:${Math.max(0, Math.min(100, pct || 0))}%"></i></div>`;
+  const r5 = m.five_hour_resets_at;
+  const c5 = (r5 && ISO_OK.test(r5) && !isNaN(new Date(r5)))
+    ? ` · <span class="rst" data-reset="${r5}">${fmtCountdown(r5)}</span>` : "";
+  const d7 = m.seven_day_resets_at ? fmtDayTime(m.seven_day_resets_at) : "";
+  const c7 = d7 ? ` · ${d7}` : "";
+  el.innerHTML = `
+    <div class="meter"><span class="lbl">5 h${c5}</span>${bar(m.five_hour_pct)}<span class="pct">${Math.round(m.five_hour_pct || 0)}%</span></div>
+    <div class="meter"><span class="lbl">7 d${c7}</span>${bar(m.seven_day_pct)}<span class="pct">${Math.round(m.seven_day_pct || 0)}%</span></div>
+  `;
+}
+
+// ---------- upload ----------
+
+let uploadQueue = [];   // [{file, id, xhr, status, pct}]
+let uploadActive = false;
+
+function onFilesPicked() {
+  const files = [...$("file").files];
+  $("file").value = "";
+  if (!files.length) return;
+  requestNotifyPermission();
+  $("upmsg").textContent = "";
+  for (const f of files) uploadQueue.push({ file: f, id: null, xhr: null, status: "pending", pct: 0, error: null });
+  renderUploadQueue();
+  if (!uploadActive) runUploadQueue();
+}
+
+function renderUploadQueue() {
+  const q = uploadQueue.filter((it) => it.status !== "done" && it.status !== "removed");
+  if (!q.length) { $("upqueue").innerHTML = ""; $("upfooter").innerHTML = ""; return; }
+  $("upqueue").innerHTML = q.map((it) => {
+    const i = uploadQueue.indexOf(it);
+    const pctTxt = it.status === "uploading" ? ` — ${Math.round(it.pct)}%` : "";
+    const sizeTxt = ` — ${fmtBytes(it.file.size)}`;
+    const errTxt = it.status === "failed" ? `<div class="err">${esc(it.error || "Error al subir")}</div>` : "";
+    const retryBtn = it.status === "failed"
+      ? `<button class="small" onclick="retryUploadItem(${i})">Reintentar subida</button>` : "";
+    return `<div class="uprow"><span class="name">${esc(it.file.name)}${pctTxt}${sizeTxt}${errTxt}</span>
+      ${retryBtn}<button class="x" onclick="cancelUploadItem(${i})">✕</button></div>`;
+  }).join("");
+  $("upfooter").innerHTML = `<button class="small ghost" onclick="cancelAllUploads()">Cancelar todo</button>`;
+}
+
+function retryUploadItem(i) {
+  const item = uploadQueue[i];
+  if (!item || item.status !== "failed") return;
+  // The half-created job (if any) is abandoned; a retry starts clean.
+  if (item.id) { api(`/api/jobs/${item.id}/delete`, { method: "POST" }).catch(() => {}); item.id = null; }
+  item.status = "pending"; item.error = null; item.pct = 0;
+  renderUploadQueue();
+  if (!uploadActive) runUploadQueue();
+}
+
+function putWithProgress(url, file, item) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    item.xhr = xhr;
+    xhr.open("PUT", url);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        item.pct = (e.loaded / e.total) * 100;
+        $("prog").value = item.pct;
+        renderUploadQueue();
+      }
+    };
+    xhr.onload = () => (xhr.status >= 200 && xhr.status < 300) ? resolve() : reject(new Error("HTTP " + xhr.status));
+    xhr.onerror = () => reject(new Error("error de red"));
+    xhr.onabort = () => reject(new Error("aborted"));
+    xhr.send(file);
+  });
+}
+
+async function uploadOne(item) {
+  const f = item.file;
+  const res = await api("/api/jobs", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ filename: f.name, size_bytes: f.size }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `No se pudo crear el trabajo (HTTP ${res.status})`);
+  }
+  const created = await res.json();
+  item.id = created.id;
+  if (item.status === "removed") {
+    await api(`/api/jobs/${created.id}/delete`, { method: "POST" }).catch(() => {});
+    return;
+  }
+  item.status = "uploading";
+  renderUploadQueue();
+  // Auto-retry a failed PUT up to 2 times with backoff before giving up.
+  let lastErr = null;
+  for (let attempt = 0; attempt <= 2; attempt++) {
+    if (item.status === "removed") break;
+    try { await putWithProgress(created.upload_url, f, item); lastErr = null; break; }
+    catch (e) {
+      lastErr = e;
+      if (e.message === "aborted" || item.status === "removed") break;
+      if (attempt < 2) await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+    }
+  }
+  if (lastErr) throw lastErr;
+  if (item.status === "removed") {
+    await api(`/api/jobs/${created.id}/delete`, { method: "POST" }).catch(() => {});
+    return;
+  }
+  await api(`/api/jobs/${created.id}/finalize`, { method: "POST" });
+}
+
+async function runUploadQueue() {
+  uploadActive = true;
+  $("upbtn").disabled = true;
+  $("prog").hidden = false;
+  while (true) {
+    const item = uploadQueue.find((it) => it.status === "pending");
+    if (!item) break;
+    $("prog").value = 0;
+    try {
+      await uploadOne(item);
+      if (item.status !== "removed") item.status = "done";
+    } catch (e) {
+      // Keep the failed item visible with its error and a retry button.
+      if (item.status !== "removed") {
+        item.status = "failed";
+        item.error = e.message;
+      }
+    }
+    renderUploadQueue();
+    refresh();
+  }
+  $("upbtn").disabled = false;
+  $("prog").hidden = true;
+  uploadQueue = uploadQueue.filter((it) => it.status !== "done" && it.status !== "removed");
+  renderUploadQueue();
+  uploadActive = false;
+  refresh();
+}
+
+function cancelUploadItem(i) {
+  const item = uploadQueue[i];
+  if (!item) return;
+  if (item.status === "uploading" && item.xhr) {
+    item.xhr.abort();
+  }
+  const hadId = item.id;
+  item.status = "removed";
+  renderUploadQueue();
+  if (hadId) api(`/api/jobs/${hadId}/delete`, { method: "POST" }).then(refresh).catch(() => {});
+}
+
+function cancelAllUploads() {
+  for (const item of uploadQueue) {
+    if (item.status === "pending" || item.status === "uploading") {
+      if (item.xhr) item.xhr.abort();
+      const hadId = item.id;
+      item.status = "removed";
+      if (hadId) api(`/api/jobs/${hadId}/delete`, { method: "POST" }).catch(() => {});
+    }
+  }
+  renderUploadQueue();
+  refresh();
+}
+
+// ---------- job actions ----------
+
+async function cancelJob(id) { await api(`/api/jobs/${id}/cancel`, { method: "POST" }); refresh(); }
+async function retryJob(id) { await api(`/api/jobs/${id}/retry`, { method: "POST" }); refresh(); }
+async function deleteJob(id) { await api(`/api/jobs/${id}/delete`, { method: "POST" }); refresh(); }
+
+function confirmDeleteJob(id) {
+  askConfirm("¿Borrar esta versión?", () => deleteJob(id));
+}
+
+function confirmDownloadAll(id) {
+  askConfirm("¿Descargar todos los archivos?", () => { downloadAll(id); });
+}
+
+let pendingConfirm = null;
+
+function askConfirm(message, onYes) {
+  pendingConfirm = onYes;
+  $("confirmmsgtext").textContent = message;
+  $("confirmmsg").textContent = "";
+  $("confirmModal").classList.remove("hidden");
+}
+
+function closeConfirm() { pendingConfirm = null; $("confirmModal").classList.add("hidden"); }
+
+async function confirmYes() {
+  if (!pendingConfirm) return;
+  const fn = pendingConfirm;
+  $("confirmyesbtn").disabled = true;
+  try {
+    await fn();
+    closeConfirm();
+  } catch (e) {
+    $("confirmmsg").textContent = e.message;
+  } finally {
+    $("confirmyesbtn").disabled = false;
+  }
+}
+
+function openConfirmDeleteAll() {
+  askConfirm("¿Borrar todos los trabajos terminados?", async () => {
+    await api("/api/jobs/delete-all", { method: "POST" });
+    refresh();
+  });
+}
+
+async function doRestartServer() {
+  const launchLocalBionico = () => {
+    try {
+      const a = document.createElement("a");
+      a.href = "bionico-v5-2://restart";
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => a.remove(), 2000);
+    } catch (_) {}
+  };
+  askConfirm("¿Reiniciar el servidor? Esto detiene cualquier trabajo en curso.", async () => {
+    const res = await api("/api/server/restart", { method: "POST" });
+    if (!res.ok) { const b = await res.json().catch(()=>({})); throw new Error(b.error || `HTTP ${res.status}`); }
+    launchLocalBionico();
+    alert("Reinicio solicitado. El servidor se reiniciará en unos segundos.");
+  });
+}
+
+let pendingChange = null;
+const TARGET_LABEL = { video: "video", quotes: "quotes", carousel: "carrusel" };
+
+function openChanges(id, target) {
+  pendingChange = { id, target };
+  $("modaltitle").textContent = `Pedir cambios (${TARGET_LABEL[target] || target})`;
+  $("notes").value = ""; $("modalmsg").textContent = "";
+  updateNotesCount();
+  $("modal").classList.remove("hidden");
+  $("notes").focus();
+}
+
+function fillChange(text) {
+  $("notes").value = text;
+  updateNotesCount();
+  $("notes").focus();
+}
+
+function updateNotesCount() {
+  $("notescount").textContent = `${$("notes").value.length}/2000`;
+}
+
+function closeChanges() { pendingChange = null; $("modal").classList.add("hidden"); }
+
+async function sendChanges() {
+  if (!pendingChange) return;
+  const instructions = $("notes").value.trim();
+  if (!instructions) return;
+  $("sendbtn").disabled = true;
+  try {
+    const res = await api(`/api/jobs/${pendingChange.id}/changes`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ target: pendingChange.target, instructions }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      $("modalmsg").textContent = body.error || `HTTP ${res.status}`;
+      return;
+    }
+    closeChanges(); refresh();
+  } catch (e) {
+    $("modalmsg").textContent = e.message;
+  } finally {
+    $("sendbtn").disabled = false;
+  }
+}
+
+// ---------- preview ----------
+
+let pendingPreview = null;
+
+// Only the classic editable deliverables offer "Cambios…" from their preview:
+// the V6 extra formats are not editable targets in V6.0.
+const CLASSIC_EDITABLE = [/^final_\d+\.mp4$/, /^quote_\d+\.mp4$/, /^carrusel_slide\d+\.png$/];
+
+function isClassicDeliverable(name, kind) {
+  if (!name) return kind === "video"; // legacy result-only preview (no outputs list)
+  return CLASSIC_EDITABLE.some((re) => re.test(name));
+}
+
+function openPreview(id, encodedName, kind) {
+  const name = encodedName ? decodeURIComponent(encodedName) : "";
+  const j = lastJobs.find((x) => x.id === id);
+  const url = name ? `/api/jobs/${id}/files/${encodeURIComponent(name)}` : `/api/jobs/${id}/result`;
+  const filename = name ? `${id}-${name}` : `${id}-video.mp4`;
+  if (kind === "pdf") { downloadOne(url, filename); return; } // download-only, no preview
+  pendingPreview = { id, name, kind, url, filename };
+  const TITLE = { video: "Video", quote: "Quote", slide: "Carrusel", caption: "Texto", image: "Imagen" };
+  $("previewtitle").textContent = TITLE[kind] || kind;
+  $("previewdlbtn").textContent = "Descargar";   // single-file preview (reset from a slideshow)
+  const body = $("previewbody");
+  if (kind === "video" || kind === "quote") {
+    body.innerHTML = `<video controls playsinline src="${url}"></video>`;
+  } else if (kind === "slide" || kind === "image") {
+    body.innerHTML = `<img src="${url}">`;
+  } else if (kind === "caption") {
+    // .txt and .srt deliverables share this text preview.
+    body.innerHTML = `<pre>Cargando…</pre>`;
+    api(url).then((r) => r.text()).then((t) => { body.innerHTML = `<pre>${esc(t)}</pre>`; })
+      .catch(() => { body.innerHTML = `<pre class="err">Error</pre>`; });
+  } else {
+    body.innerHTML = "";
+  }
+  const target = KIND_TARGET[kind];
+  const canEdit = !!(j && j.run_id && j.status === "done" && target
+    && isClassicDeliverable(name, kind));
+  $("previewchgbtn").hidden = !canEdit;
+  $("previewModal").classList.remove("hidden");
+}
+
+function closePreview() {
+  $("previewbody").innerHTML = "";
+  $("previewModal").classList.add("hidden");
+  pendingPreview = null;
+  pendingSlideshow = null;
+}
+
+// ----- slideshow: a multi-slide format (carousel) shown as one paged viewer -----
+let pendingSlideshow = null;   // { id, format, label, files:[{name,kind}], i }
+
+function openSlideshow(id, argsEnc) {
+  const { format, label, files } = JSON.parse(decodeURIComponent(argsEnc));
+  if (!files || !files.length) return;
+  pendingSlideshow = { id, format, label, files, i: 0 };
+  pendingPreview = null;
+  $("previewtitle").textContent = `${label} (${files.length})`;
+  $("previewchgbtn").hidden = true;                 // grouped sets are not edit targets
+  $("previewdlbtn").textContent = "Descargar todo"; // downloads the whole set as one zip
+  renderSlide();
+  $("previewModal").classList.remove("hidden");
+}
+
+function renderSlide() {
+  const s = pendingSlideshow; if (!s) return;
+  const f = s.files[s.i];
+  const url = `/api/jobs/${s.id}/files/${encodeURIComponent(f.name)}`;
+  const media = (f.kind === "video" || f.kind === "quote")
+    ? `<video controls playsinline src="${url}"></video>`
+    : `<img src="${url}">`;
+  const nav = s.files.length > 1
+    ? `<div class="ssnav">
+         <button class="small ghost" onclick="slideStep(-1)">‹</button>
+         <span>${s.i + 1} / ${s.files.length}</span>
+         <button class="small ghost" onclick="slideStep(1)">›</button>
+       </div>`
+    : "";
+  $("previewbody").innerHTML = media + nav;
+}
+
+function slideStep(d) {
+  const s = pendingSlideshow; if (!s) return;
+  s.i = (s.i + d + s.files.length) % s.files.length;
+  renderSlide();
+}
+
+function downloadPreview() {
+  if (pendingSlideshow) {   // a grouped set -> the Worker zips the whole format on demand
+    const s = pendingSlideshow;
+    downloadOne(`/api/jobs/${s.id}/zip/${encodeURIComponent(s.format)}`, `${s.id}-${s.format}.zip`);
+    return;
+  }
+  if (!pendingPreview) return;
+  downloadOne(pendingPreview.url, pendingPreview.filename);
+}
+
+function previewChanges() {
+  if (!pendingPreview) return;
+  const target = KIND_TARGET[pendingPreview.kind];
+  if (!target) return;
+  const id = pendingPreview.id;
+  closePreview();
+  openChanges(id, target);
+}
+
+// ---------- rendering ----------
+
+const STATUS_LABEL = {
+  uploading: "subiendo", queued: "en cola", claimed: "asignado",
+  processing: "procesando", publishing: "publicando",
+  done: "listo", failed: "error", canceled: "cancelado",
+  rejected: "no aplicado",
+};
+
+const STAGE_LABEL = {
+  desilence: "Quitando silencios", transcribe: "Transcribiendo",
+  edit_cut: "Corte editorial", apply_cut: "Aplicando corte",
+  plan: "Planificando escenas",
+  animate: "Animando escenas", captions: "Subtítulos",
+  render: "Renderizando", quotes: "Generando quotes",
+  carousel: "Generando carrusel", finalize: "Exportando",
+  quota: "Esperando cupo de IA",
+};
+
+const ACTIVE_STATUSES = ["queued", "claimed", "processing", "publishing"];
+
+// stage_detail arrives as a JSON TEXT column ({"scene":n,"total":t}) or object.
+function parseStageDetail(j) {
+  let sd = j.stage_detail;
+  if (!sd) return null;
+  if (typeof sd === "string") { try { sd = JSON.parse(sd); } catch { return null; } }
+  return (sd && typeof sd === "object") ? sd : null;
+}
+
+function statusChip(j) {
+  const active = ACTIVE_STATUSES.includes(j.status);
+  let label;
+  if (j.kind === "edit" && active) {
+    label = `editando ${esc(j.target || "")}`;
+  } else if (j.status === "processing" && j.stage && STAGE_LABEL[j.stage]) {
+    label = STAGE_LABEL[j.stage];
+    const sd = parseStageDetail(j);
+    if (j.stage === "animate" && sd && sd.scene && sd.total) {
+      label = `Animando escena ${Number(sd.scene)} de ${Number(sd.total)}`;
+    }
+  } else {
+    label = STATUS_LABEL[j.status] || j.status;
+  }
+  return `<span class="st st-${j.status}">${label}</span>`;
+}
+
+function timeCell(j) {
+  const start = new Date(j.created_at).getTime();
+  const terminal = ["done", "failed", "canceled", "rejected"].includes(j.status);
+  const end = terminal ? new Date(j.updated_at).getTime() : Date.now();
+  return fmtElapsed(end - start);
+}
+
+function actionsCell(j) {
+  if (j.status === "uploading") {
+    return `<button class="small ghost" onclick="confirmDeleteJob('${j.id}')">Borrar</button>`;
+  }
+  if (ACTIVE_STATUSES.includes(j.status)) {
+    return `<button class="small" onclick="cancelJob('${j.id}')">Cancelar</button>`;
+  }
+  if (j.status === "failed") {
+    return `<button class="small" onclick="retryJob('${j.id}')">Reintentar</button>
+      <button class="small ghost" onclick="confirmDeleteJob('${j.id}')">Borrar</button>`;
+  }
+  if (j.status === "done" || j.status === "canceled" || j.status === "rejected") {
+    const outputs = j.outputs || [];
+    const zip = outputs.find((o) => o.name === "entrega.zip");
+    let dl = "";
+    if (j.status === "done" && zip) {
+      dl = `<button class="small" onclick="downloadZip('${j.id}')">Descargar todo (ZIP)</button>
+        <button class="small ghost" onclick="confirmDownloadAll('${j.id}')">Por separado</button>`;
+    } else if (j.status === "done" && outputs.length) {
+      dl = `<button class="small" onclick="confirmDownloadAll('${j.id}')">Descargar todo</button>`;
+    }
+    return `${dl}<button class="small ghost" onclick="confirmDeleteJob('${j.id}')">Borrar</button>`;
+  }
+  return "";
+}
+
+function downloadZip(id) {
+  const j = lastJobs.find((x) => x.id === id);
+  const zip = j && j.outputs && j.outputs.find((o) => o.name === "entrega.zip");
+  if (!zip) return;
+  downloadOne(`/api/jobs/${id}/files/${encodeURIComponent(zip.name)}`, `${id}-entrega.zip`);
+}
+
+function deliverableBtn(id, name, label, kind) {
+  return `<button class="small ghost" onclick="openPreview('${id}','${encodeURIComponent(name)}','${kind}')">${esc(label)}</button>`;
+}
+
+const DOWNLOADABLE_KINDS = ["video", "quote", "slide", "caption", "image", "pdf"];
+const KIND_TARGET = { video: "video", quote: "quotes", slide: "carousel" };
+
+function downloadOne(url, filename) {
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+function downloadAll(id) {
+  const j = lastJobs.find((x) => x.id === id);
+  if (!j || !j.outputs) return;
+  const files = j.outputs.filter((o) => DOWNLOADABLE_KINDS.includes(o.kind));
+  files.forEach((o, i) => {
+    setTimeout(() => {
+      downloadOne(`/api/jobs/${id}/files/${encodeURIComponent(o.name)}`, `${id}-${o.name}`);
+    }, i * 400);
+  });
+}
+
+// ---------- V6 formats manifest (grouped deliverables) ----------
+
+const CAT_ORDER = ["videos", "video_carruseles", "carruseles", "citas", "imagenes", "posters", "textos"];
+const CAT_LABEL = {
+  videos: "Videos", video_carruseles: "Video-carruseles", carruseles: "Carruseles",
+  citas: "Frases", imagenes: "Imágenes", posters: "Pósters", textos: "Textos",
+};
+
+// job id -> {state:"ok",data} | {state:"pending"} | {state:"error",at}. A job
+// whose outputs include formats_manifest.json gets it fetched ONCE (lazily,
+// on first render); until it arrives — or on error — the flat list renders.
+const manifestCache = new Map();
+const MANIFEST_RETRY_MS = 60000;
+
+function manifestFor(j) {
+  if (!(j.outputs || []).some((o) => o && o.name === "formats_manifest.json")) return null;
+  const cur = manifestCache.get(j.id);
+  if (cur) {
+    if (cur.state === "ok") return cur.data;
+    if (cur.state === "pending") return null;
+    if (Date.now() - cur.at < MANIFEST_RETRY_MS) return null; // errored recently
+  }
+  manifestCache.set(j.id, { state: "pending" });
+  api(`/api/jobs/${j.id}/files/formats_manifest.json`)
+    .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    .then((data) => {
+      if (!data || typeof data !== "object" || !data.categories || typeof data.categories !== "object") {
+        throw new Error("bad manifest");
+      }
+      manifestCache.set(j.id, { state: "ok", data });
+      renderCards(lastJobs); // regroup now that the manifest is here
+    })
+    .catch(() => { manifestCache.set(j.id, { state: "error", at: Date.now() }); });
+  return null;
+}
+
+// Open/closed state per (job, category), so the 5s poll re-render does not
+// collapse a section the user is browsing. Sections start CLOSED.
+const openCats = new Set();
+function onCatToggle(el, id, cat) {
+  const key = id + ":" + cat;
+  if (el.open) openCats.add(key); else openCats.delete(key);
+}
+
+function fileBtn(j, o, label) {
+  // pdf is download-only (openPreview downloads it directly, no modal).
+  return deliverableBtn(j.id, o.name, label, o.kind);
+}
+
+function flatDeliverables(j, outputs) {
+  const by = (k) => outputs.filter((o) => o.kind === k);
+  const video = by("video")[0];
+  const quotes = by("quote");
+  const slides = by("slide");
+  const caption = by("caption")[0];
+  let h = "";
+  if (video) h += deliverableBtn(j.id, video.name, "Video", "video");
+  h += quotes.map((q, i) => deliverableBtn(j.id, q.name, `Quote ${i + 1}`, "quote")).join("");
+  h += slides.map((s, i) => deliverableBtn(j.id, s.name, `Carrusel ${i + 1}`, "slide")).join("");
+  if (caption) h += deliverableBtn(j.id, caption.name, "Texto", "caption");
+  return h ? `<div class="grid">${h}</div>` : "";
+}
+
+function groupedDeliverables(j, manifest) {
+  const outs = new Map(j.outputs.map((o) => [o.name, o]));
+  const shown = new Set();
+  let h = "";
+  for (const cat of CAT_ORDER) {
+    const entries = (manifest.categories[cat] || []).filter((e) =>
+      e && e.file && outs.has(e.file) && !["zip", "meta"].includes(outs.get(e.file).kind));
+    if (!entries.length) continue;
+
+    // Multi-slide formats (a carousel = its N slides) collapse to ONE button that
+    // opens a slideshow; single-media formats (videos, quotes, posters, citas,
+    // textos) stay one button per file. Group by the manifest `format` key.
+    const byFormat = new Map(), order = [];
+    for (const e of entries) {
+      const fmt = e.format || e.file;
+      if (!byFormat.has(fmt)) { byFormat.set(fmt, []); order.push(fmt); }
+      byFormat.get(fmt).push(e);
+    }
+    const groups = [], singles = [];
+    for (const fmt of order) {
+      const grp = byFormat.get(fmt);
+      const isSlideSet = grp.length > 1 && grp.every((e) => outs.get(e.file).kind === "slide");
+      if (isSlideSet) {
+        grp.forEach((e) => shown.add(e.file));
+        const label = (grp[0].label ? String(grp[0].label).replace(/\s+\d+$/, "") : fmt);
+        groups.push({ fmt, label, files: grp.map((e) => ({ name: e.file, kind: outs.get(e.file).kind })) });
+      } else {
+        grp.forEach((e) => { shown.add(e.file); singles.push(e); });
+      }
+    }
+    let btns = groups.map((g) => groupBtn(j.id, g.fmt, g.label, g.files)).join("");
+    const totals = {}, seen = {};
+    for (const e of singles) { const l = e.label || e.file; totals[l] = (totals[l] || 0) + 1; }
+    btns += singles.map((e) => {
+      let label = e.label || e.file;
+      if (totals[label] > 1) { seen[label] = (seen[label] || 0) + 1; label = `${label} ${seen[label]}`; }
+      return deliverableBtn(j.id, e.file, label, outs.get(e.file).kind);
+    }).join("");
+
+    // "Descargar pack" always available now — the Worker zips the category from R2.
+    const pack = ` · <a class="packlink" href="/api/jobs/${j.id}/zip/${encodeURIComponent(cat)}"
+         download onclick="event.stopPropagation()">Descargar pack</a>`;
+    const key = j.id + ":" + cat;
+    h += `<details class="cat"${openCats.has(key) ? " open" : ""} ontoggle="onCatToggle(this,'${j.id}','${cat}')">
+      <summary>${CAT_LABEL[cat] || esc(cat)} (${entries.length})${pack}</summary>
+      <div class="grid">${btns}</div></details>`;
+  }
+  // Files the manifest does not cover keep the classic flat rendering.
+  const leftovers = j.outputs.filter((o) => o && !shown.has(o.name));
+  return h + flatDeliverables(j, leftovers);
+}
+
+// One button for a multi-slide format -> opens the slideshow (all args in one
+// encoded blob so labels with quotes/specials never break the onclick).
+function groupBtn(id, format, label, files) {
+  const args = encodeURIComponent(JSON.stringify({ format, label, files }));
+  return `<button class="small ghost" onclick="openSlideshow('${id}','${args}')">${esc(label)} (${files.length})</button>`;
+}
+
+function deliverables(j) {
+  if (!j.outputs || !j.outputs.length) {
+    if (j.status !== "done") return "";
+    return `<tr class="sub"><td colspan="5"><div class="grid">
+      <button class="small ghost" onclick="openPreview('${j.id}','','video')">Video</button>
+      </div></td></tr>`;
+  }
+  const manifest = manifestFor(j);
+  const h = manifest ? groupedDeliverables(j, manifest) : flatDeliverables(j, j.outputs);
+  return `<tr class="sub"><td colspan="5">${h}</td></tr>`;
+}
+
+// A version is the "original" upload unless it was born from an edit request.
+function isOriginalVersion(j) { return j.kind !== "edit"; }
+
+function versionLabel(j) {
+  if (isOriginalVersion(j)) return "Original";
+  const n = (j.version_no || 2) - 1;              // first edit (version_no 2) -> "Edición 1"
+  const fmt = TARGET_LABEL[j.target] || j.target || "";
+  return `Edición ${n}${fmt ? " · " + fmt : ""}`;
+}
+
+function friendlyError(j) {
+  return j.kind === "edit"
+    ? "Ocurrió un error al aplicar el cambio. Puedes reintentarlo."
+    : "Ocurrió un error al procesar este video. Puedes reintentarlo.";
+}
+
+// The instruction text a creator typed for an edit, truncated but expandable.
+function instrBlock(text) {
+  const t = String(text);
+  if (t.length <= 90) return `<div class="vinstr">“${esc(t)}”</div>`;
+  return `<details class="vinstr"><summary>“${esc(t.slice(0, 90))}…”</summary>“${esc(t)}”</details>`;
+}
+
+function versionRow(j) {
+  let err = "";
+  if (j.status === "rejected") {
+    // Amber, non-red: the change simply could not be applied.
+    err = `<div class="rejnote">No se pudo aplicar el cambio${j.error ? ": " + esc(j.error) : "."}</div>`;
+  } else if (j.status === "failed" && j.error) {
+    err = `<div class="errbox"><div class="friendly">${friendlyError(j)}</div>
+      <details><summary>Detalles técnicos</summary><pre class="err">${esc(j.error)}</pre></details></div>`;
+  } else if (j.error) {
+    err = `<div class="err">${esc(j.error)}</div>`;
+  }
+  const instr = (j.kind === "edit" && j.instructions) ? instrBlock(j.instructions) : "";
+  // Only the original carries the uploaded byte size; an edit reuses its bytes.
+  const sizeTxt = (isOriginalVersion(j) && j.size_bytes) ? ` <span class="size">${fmtBytes(j.size_bytes)}</span>` : "";
+  // Per-version (non-cumulative) token cost — operator-facing, hidden for creators.
+  const tokTxt = (isAdmin() && j.tokens_total) ? `<span class="toks">${fmtTokens(j.tokens_total)}<span class="u">tok</span></span>` : "";
+  return `<tr>
+    <td><span class="vlabel">${esc(versionLabel(j))}</span>${sizeTxt}${instr}${err}</td>
+    <td class="statuscell">${statusChip(j)}</td>
+    <td class="timecell" data-id="${j.id}">${timeCell(j)}</td>
+    <td>${tokTxt}</td>
+    <td>${actionsCell(j)}</td></tr>` + deliverables(j);
+}
+
+// Original first, then edits by ascending version number.
+function byVersion(a, b) {
+  const va = a.version_no || 1, vb = b.version_no || 1;
+  if (va !== vb) return va - vb;
+  return new Date(a.created_at) - new Date(b.created_at);
+}
+
+let lastJobs = [];
+
+function renderCards(jobs) {
+  notifyTransitions(jobs);
+  lastJobs = jobs;
+  // Group rows into cards by lineage. Jobs arrive newest-first, so a Map keyed
+  // by lineage keeps the most-recently-active card on top; inside each card the
+  // versions sort original -> latest.
+  const groups = new Map();
+  for (const j of jobs) {
+    const key = j.lineage_id || j.id;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(j);
+  }
+  $("cards").innerHTML = [...groups.values()].map((versions) => {
+    versions.sort(byVersion);
+    const name = versions[0].filename || "video.mp4";
+    const count = versions.length > 1 ? `<span class="vcount">· ${versions.length} versiones</span>` : "";
+    return `<div class="jobcard">
+      <div class="cardhead">${esc(name)}${count}</div>
+      <table><tbody>${versions.map(versionRow).join("")}</tbody></table>
+    </div>`;
+  }).join("");
+  $("bulkbar").hidden = !jobs.some((j) => TERMINAL_STATUSES.includes(j.status));
+}
+
+const TERMINAL_STATUSES = ["done", "failed", "canceled", "rejected"];
+
+// ---------- completion notifications ----------
+
+const BASE_TITLE = document.title;
+const NOTIFY = {
+  done: { icon: "✅", msg: "Tu video está listo" },
+  failed: { icon: "❌", msg: "Hubo un error con tu video" },
+  rejected: { icon: "⚠️", msg: "No se pudo aplicar el cambio" },
+};
+let prevStatuses = null;
+let titleAlert = "";
+
+function requestNotifyPermission() {
+  try {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  } catch {}
+}
+
+function fireNotify(j) {
+  const n = NOTIFY[j.status];
+  if (!n) return;
+  const name = j.filename || "video";
+  try {
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification(`${n.icon} ${n.msg}`, { body: name });
+    }
+  } catch {}
+  if (!document.hasFocus() || document.hidden) {
+    titleAlert = n.icon;
+    document.title = `${n.icon} ${BASE_TITLE}`;
+  }
+}
+
+function clearTitleAlert() {
+  if (titleAlert) { titleAlert = ""; document.title = BASE_TITLE; }
+}
+window.addEventListener("focus", clearTitleAlert);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) clearTitleAlert(); });
+
+function notifyTransitions(jobs) {
+  const map = new Map(jobs.map((j) => [j.id, j.status]));
+  if (prevStatuses) {
+    for (const j of jobs) {
+      const before = prevStatuses.get(j.id);
+      if (before && before !== j.status && NOTIFY[j.status]) fireNotify(j);
+    }
+  }
+  prevStatuses = map;
+}
+
+function tickTimes() {
+  if ($("app").classList.contains("hidden")) return;
+  for (const j of lastJobs) {
+    if (TERMINAL_STATUSES.includes(j.status)) continue;
+    const cell = document.querySelector(`.timecell[data-id="${j.id}"]`);
+    if (cell) cell.textContent = timeCell(j);
+  }
+  for (const r of document.querySelectorAll("#meters .rst[data-reset]")) {
+    r.textContent = fmtCountdown(r.dataset.reset);
+  }
+}
+
+async function refresh() {
+  try {
+    const jobs = await (await api("/api/jobs")).json();
+    renderCards(jobs);
+  } catch { /* logged out */ }
+}
+
+let pollTimer = null, settingsTimer = null, tickTimer = null;
+
+function startTimers() {
+  if (!pollTimer) pollTimer = setInterval(() => { if (!$("app").classList.contains("hidden")) refresh(); }, 5000);
+  if (!settingsTimer) settingsTimer = setInterval(() => { if (!$("app").classList.contains("hidden")) loadSettings(); }, 30000);
+  if (!tickTimer) tickTimer = setInterval(tickTimes, 1000);
+}
+
+(async function init() {
+  applyAdminUI();
+  const res = await fetch("/api/jobs");
+  show(res.ok);
+  if (res.ok) {
+    renderCards(await res.json());
+    loadSettings();
+  }
+  startTimers();
+})();
+</script>
+</body>
+</html>

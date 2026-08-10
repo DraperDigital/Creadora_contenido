@@ -1,0 +1,22 @@
+{
+  "name": "contenido-bionico",
+  "private": true,
+  "version": "0.4.1",
+  "scripts": {
+    "remotion:versions": "remotion versions",
+    "remotion:ensure": "node src/contenido_bionico/shared/remotion/ensure-compositions.mjs",
+    "remotion:render": "node src/contenido_bionico/shared/remotion/ensure-compositions.mjs && remotion render src/contenido_bionico/shared/remotion/src/index.ts",
+    "remotion:studio": "node src/contenido_bionico/shared/remotion/ensure-compositions.mjs && remotion studio src/contenido_bionico/shared/remotion/src/index.ts"
+  },
+  "dependencies": {
+    "@remotion/cli": "latest",
+    "@remotion/layout-utils": "latest",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "remotion": "latest"
+  },
+  "devDependencies": {
+    "@types/react": "19.0.0",
+    "typescript": "5.5.4"
+  }
+}

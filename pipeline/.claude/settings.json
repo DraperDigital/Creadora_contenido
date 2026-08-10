@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "deny": [
+      "Write(.claude/**)",
+      "Edit(.claude/**)",
+      "Write(src/**)",
+      "Edit(src/**)"
+    ]
+  }
+}

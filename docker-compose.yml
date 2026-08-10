@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  contenido-bionico:
+    build: .
+    container_name: contenido-bionico
+    restart: always
+    ports:
+      - "8787:8787"
+    environment:
+      - ELEVENLABS_API_KEY=sk_786630a9bf1d58ff89380b449cdba04f69cbe9f6b86927cd
+      - TRYPOST_API_URL=http://trypost:8000
+    volumes:
+      - ./server/local/data:/app/server/local/data
+      - ./pipeline/output_short:/app/pipeline/output_short

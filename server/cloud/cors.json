@@ -1,0 +1,8 @@
+[
+  {
+    "AllowedOrigins": ["https://YOUR-DASHBOARD.workers.dev"],
+    "AllowedMethods": ["PUT"],
+    "AllowedHeaders": ["*"],
+    "MaxAgeSeconds": 3600
+  }
+]

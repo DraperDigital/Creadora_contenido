@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bionico"
+version = "5.1.0"
+description = "Self-hosted engine: cloud pull-agent + inbox watcher driving the LITE video pipeline."
+requires-python = ">=3.11"
+dependencies = [
+    "psutil>=5.9,<7",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<9"]
+
+[project.scripts]
+bionico = "bionico.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["bionico*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

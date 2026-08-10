@@ -1,0 +1,2 @@
+ALTER TABLE jobs ADD COLUMN features TEXT;
+ALTER TABLE jobs ADD COLUMN anim_count TEXT;

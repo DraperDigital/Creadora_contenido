@@ -1,0 +1,40 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# secrets
+.env
+**/.env
+.bionico/
+pipeline/.bionico/
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+
+# node (pipeline)
+pipeline/node_modules/
+pipeline/**/node_modules/
+pipeline/package-lock.json
+
+# runtime data
+server/engine/runtime/
+pipeline/runs/
+pipeline/output_long/
+pipeline/output_short/
+
+# cloud dashboard
+server/cloud/.env
+server/cloud/node_modules/
+server/cloud/.wrangler/
+
+# V6: operator-managed client photos (content, not code)
+pipeline/broll_library/*
+!pipeline/broll_library/README.md
+**/.env.cutover
+
+# local LAN dashboard state
+server/local/data/

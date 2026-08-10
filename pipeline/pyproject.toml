@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "contenido-bionico"
+version = "0.1.0"
+description = "Turn a raw talking-head MP4 into a polished, captioned, animated cut with one command."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "contenido-bionico contributors" },
+]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "elevenlabs>=1,<3",
+    "httpx>=0.24,<1",
+    "numpy>=1.24,<3",
+    # Face detection for the SHORT split-screen top-half framing (Haar cascade,
+    # bundled with the wheel). Headless variant = no GUI/system libs. Optional at
+    # runtime: shared/face.py degrades to a fixed crop center if it is missing.
+    "opencv-python-headless>=4.8,<5",
+    # V6 formats stage: PDF assembly (LinkedIn document carousel).
+    "pillow>=10",
+    # V6 formats stage: person cutout for the text-behind-user image format.
+    # Guarded import at runtime; formats degrade to skip if unavailable.
+    "rembg>=2.0",
+    "onnxruntime>=1.17",
+]
+
+[project.scripts]
+contenido-bionico = "contenido_bionico.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools.package-data]
+contenido_bionico = [
+    "short/SKILL.md",
+    "short/animate/agents/*.md",
+    "short/quote/agents/*.md",
+    "short/carousel/agents/*.md",
+    "short/formats/agents/*.md",
+    "shared/remotion/src/formats/*.tsx",
+    "shared/cut/agents/*.md",
+    "shared/help/*.md",
+    "shared/remotion/tsconfig.json",
+    "shared/remotion/remotion.config.ts",
+    "shared/remotion/ensure-compositions.mjs",
+    "shared/remotion/src/index.ts",
+    "shared/remotion/src/*.tsx",
+    "shared/remotion/src/lib/*.ts",
+    "shared/remotion/guides/SKILL.md",
+    "shared/remotion/guides/rules/*.md",
+    "shared/remotion/guides/rules/assets/*.tsx",
+    "shared/remotion/public/assets/*.png",
+    "shared/remotion/public/assets/fonts/*.woff2",
+    "shared/quote-template/*.png",
+]

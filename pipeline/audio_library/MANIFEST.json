@@ -1,0 +1,262 @@
+{
+  "version": 1,
+  "description": "Catalog of sound effects + music available to the animation pipeline. The author sees a compact version of this catalog and writes Sound_Cues.json. The audio planner resolves sfx_name/requested_sound to local files, skips unresolved or missing assets, and reports missing sounds for future library additions.",
+  "sfx": [
+    {
+      "name": "entry_card",
+      "file": "sfx/Entry Card.wav",
+      "category": "transitions",
+      "duration_seconds": 1.0,
+      "default_gain_db": -15,
+      "tags": [
+        "motion",
+        "entry",
+        "container"
+      ],
+      "when_to_use": "A card, panel, or container appears as a large container-level entrance. Use slide for translated/sliding entrances and fadein for opacity-only entrances."
+    },
+    {
+      "name": "exit_card",
+      "file": "sfx/Exit Card.wav",
+      "category": "transitions",
+      "duration_seconds": 1.0,
+      "default_gain_db": -15,
+      "tags": [
+        "motion",
+        "exit",
+        "container"
+      ],
+      "when_to_use": "A card, panel, or container leaves the frame. Use for container exits that are not full-bleed exits."
+    },
+    {
+      "name": "exit_fullbleed",
+      "file": "sfx/Exit Fullbleed.wav",
+      "category": "transitions",
+      "duration_seconds": 2.0,
+      "default_gain_db": -15,
+      "tags": [
+        "motion",
+        "exit",
+        "fullbleed"
+      ],
+      "when_to_use": "A full-bleed background or whole-scene visual leaves the frame."
+    },
+    {
+      "name": "page_turn",
+      "file": "sfx/Page Turn.wav",
+      "category": "transitions",
+      "duration_seconds": 1.0,
+      "default_gain_db": -15,
+      "tags": [
+        "scene-change",
+        "broad",
+        "transition"
+      ],
+      "when_to_use": "A whole scene or visual concept changes wholesale. Use for inter-scene transitions stronger than entry_card."
+    },
+    {
+      "name": "pop",
+      "file": "sfx/Pop.wav",
+      "category": "accents",
+      "duration_seconds": 1.0,
+      "default_gain_db": -15,
+      "tags": [
+        "accent",
+        "punctuation",
+        "small"
+      ],
+      "when_to_use": "Only when a small element (tag, dot, icon, badge) appears instantly with a scale pop or bounce from nothing. Do not use for sliding entrances or opacity-only fade-ins; use slide or fadein for those."
+    },
+    {
+      "name": "slide",
+      "file": "sfx/Slide.wav",
+      "category": "transitions",
+      "duration_seconds": 2.0,
+      "default_gain_db": -15,
+      "tags": [
+        "motion",
+        "slide",
+        "entrance"
+      ],
+      "when_to_use": "An element enters by sliding or translating from the side, top, bottom, or offscreen into position. Do not use pop for this motion."
+    },
+    {
+      "name": "fadein",
+      "file": "sfx/Fadein.wav",
+      "category": "transitions",
+      "duration_seconds": 1.48,
+      "default_gain_db": -15,
+      "tags": [
+        "motion",
+        "fade",
+        "opacity",
+        "entrance"
+      ],
+      "when_to_use": "An element appears primarily through opacity fade-in with little or no translation or scale. Do not use pop for this motion."
+    },
+    {
+      "name": "mouse_click",
+      "file": "sfx/Mouse Click.wav",
+      "category": "accents",
+      "duration_seconds": 1.0,
+      "default_gain_db": -15,
+      "tags": [
+        "ui",
+        "click",
+        "mechanical"
+      ],
+      "when_to_use": "A list item, bullet, step, or UI tap appears with a click-like interaction."
+    },
+    {
+      "name": "sparkles_reveal",
+      "file": "sfx/Sparkles Reveal.wav",
+      "category": "accents",
+      "duration_seconds": 2.76,
+      "default_gain_db": -15,
+      "tags": [
+        "reveal",
+        "ambient",
+        "magic"
+      ],
+      "when_to_use": "A magical reveal or transformation when something is conceptually unveiled, such as an answer, result, or transformation."
+    },
+    {
+      "name": "beep",
+      "file": "sfx/Beep.wav",
+      "category": "accents",
+      "duration_seconds": 2.0,
+      "default_gain_db": -15,
+      "tags": [
+        "beep",
+        "emphasis",
+        "tone"
+      ],
+      "when_to_use": "Tonal beep emphasis for an important number, metric, or callout."
+    },
+    {
+      "name": "pc_keyboard_typing",
+      "file": "sfx/PC Keyboard Typing.wav",
+      "category": "keyboard",
+      "duration_seconds": 4.0,
+      "default_gain_db": -15,
+      "tags": [
+        "typing",
+        "pc"
+      ],
+      "when_to_use": "A line or sentence appears as if typed on a PC keyboard, covering the full reveal duration."
+    },
+    {
+      "name": "phone_keyboard_typing",
+      "file": "sfx/Phone Keyboard Typing.wav",
+      "category": "keyboard",
+      "duration_seconds": 5.0,
+      "default_gain_db": -15,
+      "tags": [
+        "typing",
+        "phone"
+      ],
+      "when_to_use": "A line or sentence appears as if typed on a phone keyboard, covering the full reveal duration."
+    },
+    {
+      "name": "notification_medium",
+      "file": "sfx/Notification Medium.wav",
+      "category": "notifications",
+      "duration_seconds": 2.0,
+      "default_gain_db": -15,
+      "tags": [
+        "alert",
+        "notification",
+        "medium"
+      ],
+      "when_to_use": "A medium-importance alert, callout, or notification visual appears."
+    },
+    {
+      "name": "notification_strong",
+      "file": "sfx/Notification Strong.wav",
+      "category": "notifications",
+      "duration_seconds": 2.0,
+      "default_gain_db": -15,
+      "tags": [
+        "alert",
+        "notification",
+        "strong"
+      ],
+      "when_to_use": "A high-importance alert or major callout. Use sparingly."
+    },
+    {
+      "name": "correct",
+      "file": "sfx/Correct.wav",
+      "category": "feedback",
+      "duration_seconds": 2.0,
+      "default_gain_db": -15,
+      "tags": [
+        "semantic",
+        "correct",
+        "positive"
+      ],
+      "when_to_use": "A correct answer or positive validation is shown on screen when the visual signals correctness."
+    },
+    {
+      "name": "wrong",
+      "file": "sfx/Wrong.wav",
+      "category": "feedback",
+      "duration_seconds": 0.88,
+      "default_gain_db": -15,
+      "tags": [
+        "semantic",
+        "wrong",
+        "negative"
+      ],
+      "when_to_use": "A wrong answer or negative validation is shown when the visual signals a failed or wrong state."
+    },
+    {
+      "name": "code_error",
+      "file": "sfx/Code Error.wav",
+      "category": "feedback",
+      "duration_seconds": 0.88,
+      "default_gain_db": -15,
+      "tags": [
+        "semantic",
+        "error",
+        "technical"
+      ],
+      "when_to_use": "A technical or code error is shown on screen."
+    },
+    {
+      "name": "completed_task",
+      "file": "sfx/Completed Task.wav",
+      "category": "feedback",
+      "duration_seconds": 2.0,
+      "default_gain_db": -15,
+      "tags": [
+        "semantic",
+        "completion",
+        "positive"
+      ],
+      "when_to_use": "A task or item is marked complete, such as a checklist check, ticked item, or finished step."
+    },
+    {
+      "name": "success_small",
+      "file": "sfx/Success Small.wav",
+      "category": "feedback",
+      "duration_seconds": 2.0,
+      "default_gain_db": -15,
+      "tags": [
+        "semantic",
+        "success",
+        "small"
+      ],
+      "when_to_use": "A small positive outcome or success state, less weighty than completed_task."
+    }
+  ],
+  "music": {
+    "directory": "music",
+    "loop_strategy": "crossfade_loop",
+    "crossfade_seconds": 2.0,
+    "base_gain_db": -5
+  },
+  "constraints": {
+    "max_cues_per_segment": 40,
+    "min_cue_spacing_seconds": 0.05
+  }
+}

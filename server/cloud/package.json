@@ -1,0 +1,19 @@
+{
+  "name": "bionico-cloud",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "dev": "wrangler dev",
+    "deploy": "wrangler d1 migrations apply bionico --remote && wrangler deploy"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.8.19",
+    "vitest": "~3.2.0",
+    "wrangler": "^4.0.0"
+  },
+  "dependencies": {
+    "aws4fetch": "^1.0.20",
+    "fflate": "^0.8.3"
+  }
+}

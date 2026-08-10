@@ -1,0 +1,26 @@
+# OPTIONAL Cloudflare deployment. The product runs fully locally by default —
+# see server/local/README.md. Fill these two ids only if you deploy to Cloudflare.
+name = "bionico-dashboard"
+main = "src/index.js"
+compatibility_date = "2026-06-01"
+
+[assets]
+directory = "public"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bionico"
+database_id = ""            # create with: npx wrangler d1 create bionico
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "bionico-media"
+
+[vars]
+ACCOUNT_ID = ""             # your Cloudflare account id
+BUCKET_NAME = "bionico-media"
+
+[triggers]
+crons = ["*/15 * * * *"]
