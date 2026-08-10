@@ -435,6 +435,57 @@ export async function debugJob(env, id) {
   return json({ job, events: events.results });
 }
 
+export async function publishJob(request, env, id) {
+  let body = {};
+  try { body = await request.json(); } catch { body = {}; }
+  const job = await env.DB.prepare("SELECT * FROM jobs WHERE id=? AND status='done'").bind(id).first();
+  if (!job) return json({ error: "El trabajo debe estar en estado 'listo' para publicarlo" }, 409);
+
+  const title = String(body.title || job.filename || "Nuevo Video").slice(0, 200);
+  const description = String(body.description || "").slice(0, 2000);
+  const platforms = Array.isArray(body.platforms) ? body.platforms : ["tiktok", "youtube", "instagram"];
+
+  const tryPostUrl = env.TRYPOST_API_URL || process.env.TRYPOST_API_URL || "http://trypost:8000";
+  const tryPostApiKey = env.TRYPOST_API_KEY || process.env.TRYPOST_API_KEY || "";
+
+  try {
+    const targetUrl = `${tryPostUrl}/api/v1/posts`;
+    const res = await fetch(targetUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(tryPostApiKey ? { "Authorization": `Bearer ${tryPostApiKey}` } : {}),
+      },
+      body: JSON.stringify({
+        title,
+        description,
+        job_id: id,
+        video_url: `${env.PUBLIC_BASE_URL || ""}/api/jobs/${id}/files/final.mp4`,
+        platforms,
+      }),
+    }).catch(async (e) => {
+      // Best effort fallback notification to logs
+      console.log("Trypost fetch error:", e);
+      return { ok: false, status: 500, json: async () => ({ error: e.message }) };
+    });
+
+    const data = await res.json().catch(() => ({}));
+    await logEvent(env, id, "user", "publish_trypost", JSON.stringify({ ok: res.ok, status: res.status, title }));
+
+    if (!res.ok) {
+      return json({ error: data.error || data.message || `Trypost devolvió status ${res.status}` }, 400);
+    }
+
+    await env.DB.prepare("UPDATE jobs SET updated_at=? WHERE id=?").bind(Date.now(), id).run();
+    return json({ ok: true, published_at: Date.now(), result: data });
+  } catch (err) {
+    console.error("Trypost publish failed:", err);
+    await logEvent(env, id, "user", "publish_error", String(err));
+    return json({ error: `Error al conectar con Trypost: ${err.message}` }, 500);
+  }
+}
+
+
 // ---- server restart (dashboard button -> PC agent cycles the whole stack) ----
 //
 // Storage is the existing key-value `settings` table, no migration:

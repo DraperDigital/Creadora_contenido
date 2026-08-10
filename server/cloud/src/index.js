@@ -6,7 +6,7 @@ export function json(data, status = 200, headers = {}) {
 }
 
 import { handleLogin, handleLogout, logoutAll, getSession, requireAgent } from "./auth.js";
-import { createJob, listJobs, finalizeJob, jobResult, retryJob, requestChanges, jobFile, cancelJob, deleteJob, deleteAll, getSettings, putSettings, debugJob, requestRestart, getRestartControl, ackRestart } from "./jobs.js";
+import { createJob, listJobs, finalizeJob, jobResult, retryJob, requestChanges, jobFile, cancelJob, deleteJob, deleteAll, getSettings, putSettings, debugJob, publishJob, requestRestart, getRestartControl, ackRestart } from "./jobs.js";
 import { claim, activeJobs, agentStatus, complete, uploadUrl, agentMetrics, listReclaims, ackReclaims } from "./agent.js";
 import { zipJob } from "./zip.js";
 import { runCron } from "./cron.js";
@@ -64,7 +64,7 @@ export default {
       // On-demand pack: zip a group (category / format key / "all") from R2.
       const z = p.match(/^\/api\/jobs\/([0-9a-f]+)\/zip\/([A-Za-z0-9._-]{1,64})$/);
       if (z && request.method === "GET") return zipJob(env, z[1], z[2]);
-      const m = p.match(/^\/api\/jobs\/([0-9a-f]+)\/(finalize|result|retry|changes|cancel|delete)$/);
+      const m = p.match(/^\/api\/jobs\/([0-9a-f]+)\/(finalize|result|retry|changes|cancel|delete|publish)$/);
       if (m) {
         const [, id, action] = m;
         if (action === "finalize" && request.method === "POST") return finalizeJob(env, id);
@@ -73,7 +73,9 @@ export default {
         if (action === "changes" && request.method === "POST") return requestChanges(request, env, id);
         if (action === "cancel" && request.method === "POST") return cancelJob(env, id);
         if (action === "delete" && request.method === "POST") return deleteJob(env, id);
+        if (action === "publish" && request.method === "POST") return publishJob(request, env, id);
       }
+
       const d = p.match(/^\/api\/debug\/jobs\/([0-9a-f]+)$/);
       // Debug dumps the full row (tokens included): operator-only.
       if (d && request.method === "GET") return admin ? debugJob(env, d[1]) : adminOnly();

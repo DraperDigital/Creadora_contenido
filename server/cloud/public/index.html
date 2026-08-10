@@ -209,7 +209,28 @@
   </div>
 </div>
 
+<div id="publishModal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:999">
+  <div class="card" style="width:100%;max-width:500px;background:#1e1e2e;padding:1.5rem;border-radius:12px;color:#fff">
+    <h3 style="margin-top:0">🚀 Publicar a Trypost (Hermes)</h3>
+    <p style="font-size:0.85rem;color:#a6adc8">Valida el título y la descripción antes de enviar el video a tus redes sociales:</p>
+    
+    <label style="display:block;margin-top:0.8rem;font-size:0.85rem">Título del Post</label>
+    <input type="text" id="pubTitle" style="width:100%;padding:0.5rem;border-radius:6px;border:1px solid #45475a;background:#11111b;color:#fff;margin-top:0.2rem">
+
+    <label style="display:block;margin-top:0.8rem;font-size:0.85rem">Descripción / Hashtags</label>
+    <textarea id="pubDescription" rows="4" style="width:100%;padding:0.5rem;border-radius:6px;border:1px solid #45475a;background:#11111b;color:#fff;margin-top:0.2rem"></textarea>
+
+    <div id="pubModalMsg" style="margin-top:0.8rem;font-size:0.85rem;color:#f38ba8"></div>
+
+    <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:1rem">
+      <button class="ghost" onclick="closePublishModal()">Cancelar</button>
+      <button id="pubSendBtn" style="background:#8b5cf6;color:#fff;border:none;padding:0.5rem 1rem;border-radius:6px;cursor:pointer" onclick="sendPublish()">🚀 Confirmar y Publicar</button>
+    </div>
+  </div>
+</div>
+
 <script>
+
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replaceAll("&", "&amp;").replaceAll("<", "&lt;");
 
@@ -842,9 +863,55 @@ function actionsCell(j) {
     } else if (j.status === "done" && outputs.length) {
       dl = `<button class="small" onclick="confirmDownloadAll('${j.id}')">Descargar todo</button>`;
     }
-    return `${dl}<button class="small ghost" onclick="confirmDeleteJob('${j.id}')">Borrar</button>`;
+    const pubBtn = j.status === "done" ? `<button class="small primary" style="background:#8b5cf6;color:white;margin-right:4px;" onclick="openPublishModal('${j.id}')">🚀 Publicar a Trypost</button>` : "";
+    return `${pubBtn}${dl}<button class="small ghost" onclick="confirmDeleteJob('${j.id}')">Borrar</button>`;
   }
   return "";
+}
+
+let pendingPublishId = null;
+
+function openPublishModal(id) {
+  pendingPublishId = id;
+  const j = lastJobs.find((x) => x.id === id);
+  const filename = j ? (j.filename || "Nuevo Video") : "Nuevo Video";
+  $("pubTitle").value = filename.replace(/\.[^/.]+$/, "");
+  $("pubDescription").value = `🚀 Nuevo contenido editado con Contenido Biónico V6\n\n#reels #shorts #tiktok #contenido`;
+  $("pubModalMsg").textContent = "";
+  $("publishModal").classList.remove("hidden");
+}
+
+function closePublishModal() {
+  pendingPublishId = null;
+  $("publishModal").classList.add("hidden");
+}
+
+async function sendPublish() {
+  if (!pendingPublishId) return;
+  const id = pendingPublishId;
+  const title = $("pubTitle").value.trim();
+  const description = $("pubDescription").value.trim();
+  $("pubSendBtn").disabled = true;
+  $("pubModalMsg").textContent = "Enviando a Trypost (Hermes)...";
+  try {
+    const res = await api(`/api/jobs/${id}/publish`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, description, platforms: ["tiktok", "youtube", "instagram"] }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      $("pubModalMsg").textContent = body.error || `Error HTTP ${res.status}`;
+      return;
+    }
+    closePublishModal();
+    alert("¡Video enviado a Trypost para su publicación exitosamente!");
+    refresh();
+  } catch (e) {
+    $("pubModalMsg").textContent = e.message;
+  } finally {
+    $("pubSendBtn").disabled = false;
+  }
 }
 
 function downloadZip(id) {
@@ -853,6 +920,7 @@ function downloadZip(id) {
   if (!zip) return;
   downloadOne(`/api/jobs/${id}/files/${encodeURIComponent(zip.name)}`, `${id}-entrega.zip`);
 }
+
 
 function deliverableBtn(id, name, label, kind) {
   return `<button class="small ghost" onclick="openPreview('${id}','${encodeURIComponent(name)}','${kind}')">${esc(label)}</button>`;
