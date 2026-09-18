@@ -168,13 +168,41 @@ def _ensure_mp4_name(path: Path) -> Path:
         return path
 
 
+def convert_horizontal_to_vertical(src: Path) -> Path:
+    """Auto-crop/convert a horizontal (landscape) video into 9:16 vertical MP4.
+
+    Crops the center 9:16 aspect ratio (crop=ih*9/16:ih) and re-encodes to H.264/AAC.
+    """
+    src = Path(src)
+    out = src.parent / (src.stem + "_vertical.mp4")
+    res = _run("ffmpeg", [
+        "-y", "-hide_banner", "-nostats", "-loglevel", "error",
+        "-i", str(src),
+        "-vf", "crop=ih*9/16:ih",
+        "-c:v", "libx264", "-preset", "veryfast", "-crf", "18",
+        "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k",
+        "-movflags", "+faststart", str(out),
+    ], timeout=REENCODE_TIMEOUT)
+    ok = res is not None and res.returncode == 0 and out.exists() and out.stat().st_size > 0
+    if not ok:
+        raise PreflightRejected(
+            "No pudimos convertir el video horizontal a vertical. Graba en vertical (9:16) y vuelve a subirlo."
+        )
+    try:
+        if out != src:
+            src.unlink()
+    except OSError:
+        pass
+    return out
+
+
 def prepare_input(tmp: Path, redownload=None, max_seconds: float | None = None) -> Path:
     """Validate a freshly downloaded upload and normalize it to .mp4.
 
     - Corrupt/unreadable file: one `redownload()` attempt (truncated
       transfers), then PreflightRejected.
-    - Longer than MAX_VIDEO_SECONDS, or landscape (width > height):
-      PreflightRejected with a short Spanish reason.
+    - Longer than MAX_VIDEO_SECONDS: PreflightRejected.
+    - Landscape (width > height): Automatically cropped to 9:16 vertical.
     - .mov/.m4v: remuxed to .mp4 (re-encode fallback).
 
     Returns the path of the validated .mp4 (may differ from `tmp`).
@@ -202,10 +230,9 @@ def prepare_input(tmp: Path, redownload=None, max_seconds: float | None = None) 
             "(%.0f minutos). Sube un video más corto." % (duration, limit, limit / 60)
         )
     if width and height and width > height:
-        raise PreflightRejected(
-            "El video es horizontal; por ahora solo procesamos videos "
-            "verticales (9:16). Graba o exporta en vertical y vuelve a subirlo."
-        )
+        tmp = convert_horizontal_to_vertical(tmp)
+
     if tmp.suffix.lower() != ".mp4":
         return remux_to_mp4(tmp)
     return tmp
+
