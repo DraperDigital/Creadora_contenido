@@ -101,9 +101,17 @@
   .uprow { display: flex; align-items: center; gap: .5rem; padding: .3rem 0; }
   .uprow .name { flex: 1; font-size: .9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .uprow button.x { background: rgba(255,255,255,0.1); padding: .15rem .5rem; font-size: .8rem; line-height: 1.2; border-radius: 6px; }
-  .setrow { display: flex; align-items: center; gap: .7rem; }
-  .setrow label { font-weight: 600; font-size: .92rem; white-space: nowrap; }
-  .setrow select { width: auto; flex: 0 0 auto; }
+  .upload-card { border: 2px dashed rgba(168, 85, 247, 0.35); background: rgba(168, 85, 247, 0.04); text-align: center; transition: all 0.25s ease; cursor: pointer; border-radius: 18px; padding: 2.2rem 1.5rem; }
+  .upload-card:hover { border-color: #a855f7; background: rgba(168, 85, 247, 0.08); transform: translateY(-2px); }
+  .upload-icon { font-size: 2.5rem; margin-bottom: .4rem; filter: drop-shadow(0 0 12px rgba(168,85,247,0.4)); }
+  .upload-title { font-weight: 700; font-size: 1.1rem; color: #f8fafc; }
+  .upload-sub { font-size: .85rem; color: #94a3b8; margin-top: .25rem; margin-bottom: 1rem; }
+  
+  header.top-bar { background: rgba(18, 20, 29, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: .8rem 1.4rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+  
+  .seclbl-badge { display: inline-flex; align-items: center; gap: .4rem; background: rgba(168, 85, 247, 0.12); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.25); font-size: .72rem; font-weight: 700; padding: .25rem .65rem; border-radius: 8px; letter-spacing: .05em; text-transform: uppercase; }
+
+  select { background: rgba(10, 11, 16, 0.9); border: 1px solid rgba(255, 255, 255, 0.12); color: #f8fafc; border-radius: 10px; padding: .55rem .9rem; font-weight: 500; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -119,29 +127,33 @@
 </div>
 
 <div id="app" class="hidden">
-  <header class="top">
-    <div class="spacer"></div>
-    <h1 class="brand-title" style="margin:0;font-size:1.5rem"><span>✨ CREADORA DE CONTENIDO</span></h1>
+  <header class="top-bar">
+    <h1 class="brand-title" style="margin:0;font-size:1.4rem"><span>✨ CREADORA DE CONTENIDO</span></h1>
 
-    <div class="spacer" style="display:flex; justify-content:flex-end; align-items:center; gap:.6rem">
+    <div style="display:flex; justify-content:flex-end; align-items:center; gap:.6rem">
       <div id="meters" class="meters"></div>
       <button class="small ghost" id="restartbtn" hidden onclick="doRestartServer()">Reiniciar servidor</button>
       <button class="small ghost" onclick="doLogout()">Salir</button>
     </div>
   </header>
 
-
-  <div class="card">
+  <div class="card upload-card" onclick="if(event.target.tagName !== 'BUTTON') $('file').click()">
     <input type="file" id="file" accept=".mp4,.mov,.m4v,video/mp4,video/quicktime" multiple hidden onchange="onFilesPicked()">
-    <button onclick="$('file').click()" id="upbtn">Subir videos</button>
-    <div id="upqueue"></div>
-    <progress id="prog" value="0" max="100" hidden></progress>
-    <div id="upfooter"></div>
+    <div class="upload-icon">📤</div>
+    <div class="upload-title">Arrastra tus videos aquí o haz clic para explorar</div>
+    <div class="upload-sub">Soporta videos hablados en formato vertical (.mp4, .mov, .m4v)</div>
+    <button onclick="$('file').click()" id="upbtn" style="margin-top:.4rem">Seleccionar Videos</button>
+    <div id="upqueue" style="margin-top:1rem;text-align:left"></div>
+    <progress id="prog" value="0" max="100" hidden style="margin-top:1rem"></progress>
+    <div id="upfooter" style="margin-top:.8rem"></div>
     <p id="upmsg" class="err"></p>
   </div>
 
   <div class="card">
-    <div class="seclbl">Video <span id="savedflash" class="savedflash">Guardado</span></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <span class="seclbl-badge">🎥 Opciones de Edición</span>
+      <span id="savedflash" class="savedflash">✓ Guardado</span>
+    </div>
     <div class="settings-grid">
       <label class="chk"><input type="checkbox" id="ftCaptions" checked onchange="onSettingsChange()"><span>Subtítulos</span></label>
       <label class="chk"><input type="checkbox" id="ftCamera" checked onchange="onSettingsChange()"><span>Cámara</span></label>
@@ -149,7 +161,7 @@
       <label class="chk"><input type="checkbox" id="ftMusic" checked onchange="onSettingsChange()"><span>Música</span></label>
       <label class="chk"><input type="checkbox" id="ftSfx" checked onchange="onSettingsChange()"><span>Efectos de sonido</span></label>
     </div>
-    <div class="settings-grid" style="margin-top:.6rem">
+    <div class="settings-grid" style="margin-top:1rem">
       <div class="setrow">
         <label>Calidad de animación</label>
         <select id="animq" onchange="onSettingsChange()">
@@ -168,12 +180,18 @@
         </select>
       </div>
     </div>
-    <div class="seclbl gap">Entregables</div>
+
+    <div style="margin-top:1.2rem;margin-bottom:.6rem">
+      <span class="seclbl-badge">🖼️ Entregables</span>
+    </div>
     <div class="settings-grid">
       <label class="chk"><input type="checkbox" id="ftCarousel" checked onchange="onSettingsChange()"><span>Carrusel</span></label>
       <label class="chk"><input type="checkbox" id="ftQuotes" checked onchange="onSettingsChange()"><span>Frases para publicar</span></label>
     </div>
-    <div class="seclbl gap">Formatos</div>
+
+    <div style="margin-top:1.2rem;margin-bottom:.6rem">
+      <span class="seclbl-badge">📱 Formatos</span>
+    </div>
     <div class="settings-grid">
       <label class="chk"><input type="checkbox" id="ftVideosExtra" checked onchange="onSettingsChange()"><span>Videos extra</span></label>
       <label class="chk"><input type="checkbox" id="ftVideoCarruseles" checked onchange="onSettingsChange()"><span>Video-carruseles</span></label>
@@ -182,9 +200,10 @@
       <label class="chk"><input type="checkbox" id="ftPosters" checked onchange="onSettingsChange()"><span>Pósters</span></label>
       <label class="chk"><input type="checkbox" id="ftTextos" checked onchange="onSettingsChange()"><span>Textos</span></label>
     </div>
-    <p class="hint">Se aplica a los próximos videos que subas.</p>
+    <p class="hint" style="margin-top:1rem;color:#64748b">Configuración guardada para los próximos videos que subas.</p>
     <p id="setmsg" class="err" hidden></p>
   </div>
+
 
   <div id="cards"></div>
   <div id="bulkbar" class="card" hidden>
