@@ -74,15 +74,16 @@ except (AttributeError, OSError):
     pass
 
 # Load .env from the repo root if present.
-_ROOT = Path(__file__).resolve().parents[4]
-_ENV = _ROOT / ".env"
-if _ENV.exists():
-    for line in _ENV.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        k, v = line.split("=", 1)
-        os.environ.setdefault(k.strip(), v.strip())
+for _candidate_root in [Path(__file__).resolve().parents[4], Path(__file__).resolve().parents[5]]:
+    _ENV = _candidate_root / ".env"
+    if _ENV.exists():
+        for line in _ENV.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            os.environ[k.strip()] = v.strip()
+
 
 
 def extract_audio_to_mp3(video_path: Path, out_dir: Path) -> Path:

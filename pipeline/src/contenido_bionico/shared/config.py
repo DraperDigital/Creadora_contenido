@@ -119,13 +119,14 @@ def _parse_env_line(line: str) -> tuple[str, str] | None:
 
 def read_env_file() -> dict[str, str]:
     values: dict[str, str] = {}
-    if not ENV_PATH.exists():
-        return values
-    for line in ENV_PATH.read_text(encoding="utf-8").splitlines():
-        parsed = _parse_env_line(line)
-        if parsed is not None:
-            values[parsed[0]] = parsed[1]
+    for p in [ENV_PATH, REPO_ROOT.parent / ".env"]:
+        if p.exists():
+            for line in p.read_text(encoding="utf-8").splitlines():
+                parsed = _parse_env_line(line)
+                if parsed is not None:
+                    values[parsed[0]] = parsed[1]
     return values
+
 
 
 def write_env_values(updates: dict[str, str]) -> None:
