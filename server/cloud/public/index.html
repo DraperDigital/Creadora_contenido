@@ -469,16 +469,67 @@ function renderMeters(m) {
 let uploadQueue = [];   // [{file, id, xhr, status, pct}]
 let uploadActive = false;
 
-function onFilesPicked() {
-  const files = [...$("file").files];
-  $("file").value = "";
-  if (!files.length) return;
+function processSelectedFiles(files) {
+  if (!files || !files.length) return;
+  const validFiles = files.filter((f) => {
+    const ext = (f.name.match(/\.([a-z0-9]+)$/i) || [])[1] || "";
+    return ["mp4", "mov", "m4v"].includes(ext.toLowerCase()) || f.type.startsWith("video/");
+  });
+  if (!validFiles.length) {
+    $("upmsg").textContent = "Solo se aceptan archivos de video (.mp4, .mov o .m4v).";
+    return;
+  }
   requestNotifyPermission();
   $("upmsg").textContent = "";
-  for (const f of files) uploadQueue.push({ file: f, id: null, xhr: null, status: "pending", pct: 0, error: null });
+  for (const f of validFiles) {
+    uploadQueue.push({ file: f, id: null, xhr: null, status: "pending", pct: 0, error: null });
+  }
   renderUploadQueue();
   if (!uploadActive) runUploadQueue();
 }
+
+function onFilesPicked() {
+  const files = [...$("file").files];
+  $("file").value = "";
+  processSelectedFiles(files);
+}
+
+// Drag & Drop Handling: Prevent browser from opening dragged video files
+["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
+  window.addEventListener(eventName, (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, false);
+});
+
+window.addEventListener("dragenter", () => {
+  const card = document.querySelector(".upload-card");
+  if (card) {
+    card.style.borderColor = "#c084fc";
+    card.style.background = "rgba(168, 85, 247, 0.15)";
+  }
+}, false);
+
+window.addEventListener("dragleave", (e) => {
+  if (e.clientX <= 0 || e.clientY <= 0) {
+    const card = document.querySelector(".upload-card");
+    if (card) {
+      card.style.borderColor = "";
+      card.style.background = "";
+    }
+  }
+}, false);
+
+window.addEventListener("drop", (e) => {
+  const card = document.querySelector(".upload-card");
+  if (card) {
+    card.style.borderColor = "";
+    card.style.background = "";
+  }
+  const files = e.dataTransfer ? [...e.dataTransfer.files] : [];
+  processSelectedFiles(files);
+}, false);
+
 
 function renderUploadQueue() {
   const q = uploadQueue.filter((it) => it.status !== "done" && it.status !== "removed");
