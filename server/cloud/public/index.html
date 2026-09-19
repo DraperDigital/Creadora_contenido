@@ -197,6 +197,39 @@
           <span class="seclbl-badge">🎥 Opciones de Edición</span>
           <span id="savedflash" class="savedflash">✓ Guardado</span>
         </div>
+
+        <!-- Motor de IA & Selector de Modelo Prominente en Pantalla -->
+        <div style="background: rgba(168, 85, 247, 0.08); border: 1px solid rgba(168, 85, 247, 0.25); border-radius: 14px; padding: 1.1rem; margin-bottom: 1.2rem;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 0.8rem;">
+            <span style="font-size:0.88rem; font-weight:700; color:#c084fc;">🤖 Motor de IA & Modelo por Tarea</span>
+            <span id="aiActiveBadgeText" class="st st-done" style="font-size:0.75rem; background:rgba(168,85,247,0.2); color:#e9d5ff">FreeLLMAPI (gpt-4o-mini)</span>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.9rem;">
+            <div>
+              <label style="font-size:0.78rem; font-weight:600; color:#94a3b8; display:block; margin-bottom:0.35rem">Proveedor de IA (Failover)</label>
+              <select id="mainAiProvider" onchange="saveMainAiConfig()" style="width:100%">
+                <option value="auto">🤖 Auto-Failover (Inteligente)</option>
+                <option value="freellm">⚡ FreeLLMAPI (Modelos Gratis)</option>
+                <option value="openrouter">🌐 OpenRouter API (Multi-Cloud)</option>
+                <option value="anthropic">🔑 Anthropic API Key Directa</option>
+                <option value="subscription">💻 Claude Suscripción Local</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:0.78rem; font-weight:600; color:#94a3b8; display:block; margin-bottom:0.35rem">Modelo de IA Principal</label>
+              <select id="mainAiModel" onchange="saveMainAiConfig()" style="width:100%">
+                <option value="default">⚡ Modelo recomendado por defecto</option>
+                <option value="gpt-4o-mini">🤖 gpt-4o-mini (FreeLLM / OpenRouter)</option>
+                <option value="claude-3-5-sonnet-20241022">🧠 claude-3-5-sonnet-20241022</option>
+                <option value="claude-3-7-sonnet-20250219">🚀 claude-3-7-sonnet-20250219</option>
+                <option value="deepseek/deepseek-r1">🧪 deepseek/deepseek-r1</option>
+                <option value="google/gemini-2.5-flash">⚡ google/gemini-2.5-flash</option>
+                <option value="qwen-2.5-72b-instruct">🌐 qwen-2.5-72b-instruct</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         <div class="settings-grid">
           <label class="chk"><input type="checkbox" id="ftCaptions" checked onchange="onSettingsChange()"><span>Subtítulos</span></label>
           <label class="chk"><input type="checkbox" id="ftCamera" checked onchange="onSettingsChange()"><span>Cámara</span></label>
@@ -1749,8 +1782,69 @@ async function deleteBrollFile(name) {
   } catch {}
 }
 
+let currentKeysData = {};
+
+function updateAiBadge(provider, model) {
+  const p = provider || currentKeysData.AI_PROVIDER || "auto";
+  const m = model || currentKeysData.AI_MODEL_CHOICE || "default";
+
+  const freeKey = currentKeysData.FREE_LLM_API_KEY;
+  const openKey = currentKeysData.OPENROUTER_API_KEY;
+  const antKey = currentKeysData.ANTHROPIC_API_KEY;
+
+  let labelP = "Claude Suscripción";
+  if (p === "freellm" || (p === "auto" && freeKey)) {
+    labelP = "FreeLLMAPI";
+  } else if (p === "openrouter" || (p === "auto" && openKey)) {
+    labelP = "OpenRouter";
+  } else if (p === "anthropic" || (p === "auto" && antKey)) {
+    labelP = "Anthropic API";
+  }
+
+  let labelM = (m && m !== "default") ? m : (labelP === "FreeLLMAPI" ? "gpt-4o-mini" : "claude-3-5-sonnet");
+
+  const fullText = `🤖 IA: ${labelP} (${labelM})`;
+  if ($("aiPill")) $("aiPill").textContent = fullText;
+  if ($("sideAiText")) $("sideAiText").textContent = `${labelP} (${labelM})`;
+  if ($("aiActiveBadgeText")) $("aiActiveBadgeText").textContent = `${labelP} (${labelM})`;
+
+  if ($("mainAiProvider") && p) $("mainAiProvider").value = p;
+  if ($("mainAiModel") && m) $("mainAiModel").value = m;
+}
+
+async function loadKeysConfig() {
+  try {
+    const res = await api("/api/keys");
+    if (res.ok) {
+      currentKeysData = await res.json();
+      updateAiBadge(currentKeysData.AI_PROVIDER, currentKeysData.AI_MODEL_CHOICE);
+    }
+  } catch {}
+}
+
+async function saveMainAiConfig() {
+  const p = $("mainAiProvider") ? $("mainAiProvider").value : "auto";
+  const m = $("mainAiModel") ? $("mainAiModel").value : "default";
+
+  updateAiBadge(p, m);
+
+  try {
+    await api("/api/keys", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...currentKeysData,
+        AI_PROVIDER: p,
+        AI_MODEL_CHOICE: m,
+      }),
+    });
+    flashSaved();
+  } catch {}
+}
+
 async function refresh() {
   try {
+    loadKeysConfig();
     const jobs = await (await api("/api/jobs")).json();
     renderCards(jobs);
     loadBrollLibrary();
@@ -1768,6 +1862,7 @@ function startTimers() {
 
 (async function init() {
   applyAdminUI();
+  await loadKeysConfig();
   const res = await fetch("/api/jobs");
   show(res.ok);
   if (res.ok) {
