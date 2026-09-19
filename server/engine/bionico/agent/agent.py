@@ -748,9 +748,9 @@ def _quota_claim_deferred(usage: dict | None) -> bool:
     claiming a new job would immediately run into the Claude usage limit."""
     if not usage:
         return False
-    # A cached reading whose five-hour window already reset is stale: the
-    # quota is back, so resume claiming even if fresh metrics reads keep
-    # failing (otherwise a high stale pct would pause claiming forever).
+    ai_info = resolve_active_ai_info()
+    if ai_info.get("active_provider") != "Claude Suscripción":
+        return False
     resets_at = usage.get("five_hour_resets_at")
     if resets_at:
         try:
