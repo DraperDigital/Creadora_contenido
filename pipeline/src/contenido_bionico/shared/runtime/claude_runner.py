@@ -9,6 +9,7 @@ import subprocess
 import tempfile
 import threading
 import time
+import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -322,6 +323,79 @@ def resolve_claude_cmd() -> str | None:
     return cmd
 
 
+def _run_openai_compatible_http(
+    base_url: str,
+    api_key: str,
+    model_name: str,
+    system_prompt: str,
+    initial_message: str,
+    output_path: Path,
+    stream_path: Path | None = None,
+    stderr_path: Path | None = None,
+) -> ClaudeResult:
+    start_ts = datetime.now()
+    url = f"{base_url.rstrip('/')}/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        "User-Agent": "bionico-pipeline/1.0",
+    }
+    payload = {
+        "model": model_name or "gpt-4o-mini",
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": initial_message},
+        ],
+        "temperature": 0.3,
+    }
+    data_bytes = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(url, data=data_bytes, headers=headers, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            resp_bytes = resp.read()
+            resp_data = json.loads(resp_bytes.decode("utf-8", errors="replace"))
+            content = resp_data["choices"][0]["message"]["content"]
+    except Exception as exc:
+        end_ts = datetime.now()
+        err_msg = f"API HTTP request failed ({url}): {exc}"
+        if stderr_path:
+            try:
+                stderr_path.parent.mkdir(parents=True, exist_ok=True)
+                stderr_path.write_text(err_msg, encoding="utf-8")
+            except Exception:
+                pass
+        return ClaudeResult(
+            returncode=1,
+            stdout="",
+            stderr=err_msg,
+            command=["http_api", url],
+            start_ts=start_ts,
+            end_ts=end_ts,
+        )
+
+    end_ts = datetime.now()
+    if output_path:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(content, encoding="utf-8")
+
+    if stream_path:
+        try:
+            stream_path.parent.mkdir(parents=True, exist_ok=True)
+            ev = json.dumps({"type": "result", "result": content, "status": "completed"})
+            stream_path.write_text(f"{content}\n{ev}\n", encoding="utf-8")
+        except Exception:
+            pass
+
+    return ClaudeResult(
+        returncode=0,
+        stdout=content,
+        stderr="",
+        command=["http_api", url],
+        start_ts=start_ts,
+        end_ts=end_ts,
+    )
+
+
 def _claude_subscription_auth() -> bool:
     """True when local config says Claude runs on subscription (session) auth."""
     try:
@@ -505,6 +579,33 @@ def run_claude_code(
             active_provider = "Claude Suscripción"
             if ai_model_choice and ai_model_choice != "default":
                 active_model = ai_model_choice
+
+        if active_provider == "FreeLLMAPI" and free_llm_key:
+            stream_fp.write(f"[pipeline] active_ai: provider=FreeLLMAPI model={active_model}\n")
+            stream_fp.flush()
+            return _run_openai_compatible_http(
+                base_url=free_llm_url,
+                api_key=free_llm_key,
+                model_name=active_model,
+                system_prompt=system_prompt,
+                initial_message=initial_message,
+                output_path=output_path,
+                stream_path=stream_path,
+                stderr_path=stderr_path,
+            )
+        elif active_provider == "OpenRouter" and openrouter_key:
+            stream_fp.write(f"[pipeline] active_ai: provider=OpenRouter model={active_model}\n")
+            stream_fp.flush()
+            return _run_openai_compatible_http(
+                base_url="https://openrouter.ai/api/v1",
+                api_key=openrouter_key,
+                model_name=active_model,
+                system_prompt=system_prompt,
+                initial_message=initial_message,
+                output_path=output_path,
+                stream_path=stream_path,
+                stderr_path=stderr_path,
+            )
 
         if active_model and active_model != model:
             if "--model" in cmd:
