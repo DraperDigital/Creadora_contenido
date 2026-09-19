@@ -208,9 +208,105 @@ async function handleStatic(req, res, u) {
   return pipeline(createReadStream(path), res);
 }
 
+// ---------- B-Roll Asset Library & API Key endpoints ----------
+import { readdir, unlink } from "node:fs/promises";
+
+const BROLL_DIR = join(REPO, "pipeline", "broll_library");
+const ROOT_ENV_FILE = join(REPO, ".env");
+
+async function handleBroll(req, res, u) {
+  await mkdir(BROLL_DIR, { recursive: true });
+  if ((u.pathname === "/api/broll" || u.pathname === "/api/broll/list") && req.method === "GET") {
+    const entries = await readdir(BROLL_DIR, { withFileTypes: true });
+    const items = [];
+    for (const e of entries) {
+      if (e.isFile() && e.name !== "README.md" && !e.name.startsWith(".")) {
+        const s = await stat(join(BROLL_DIR, e.name));
+        const ext = extname(e.name).toLowerCase();
+        const isVid = [".mp4", ".mov", ".m4v"].includes(ext);
+        items.push({ name: e.name, size: s.size, kind: isVid ? "video" : "image" });
+      }
+    }
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify(items));
+  }
+  if (u.pathname === "/api/broll/upload" && req.method === "POST") {
+    const fn = u.searchParams.get("filename") || `asset_${Date.now()}.mp4`;
+    const safeName = fn.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const targetPath = join(BROLL_DIR, safeName);
+    const tmpPath = `${targetPath}.part`;
+    await pipeline(req, createWriteStream(tmpPath));
+    await rename(tmpPath, targetPath);
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify({ ok: true, filename: safeName }));
+  }
+  if (u.pathname.startsWith("/api/broll/delete/") && req.method === "POST") {
+    const name = decodeURIComponent(u.pathname.slice("/api/broll/delete/".length));
+    const safeName = name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    try { await unlink(join(BROLL_DIR, safeName)); } catch {}
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify({ ok: true }));
+  }
+  if (u.pathname.startsWith("/api/broll/file/") && req.method === "GET") {
+    const name = decodeURIComponent(u.pathname.slice("/api/broll/file/".length));
+    const targetPath = join(BROLL_DIR, name);
+    let s;
+    try { s = await stat(targetPath); } catch { res.writeHead(404); return res.end("not found"); }
+    res.writeHead(200, { "Content-Type": typeOf(targetPath), "Content-Length": s.size });
+    return pipeline(createReadStream(targetPath), res);
+  }
+  res.writeHead(404);
+  res.end("not found");
+}
+
+async function handleKeys(req, res, u) {
+  if (req.method === "GET") {
+    const envObj = loadEnvFile(ROOT_ENV_FILE);
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify({
+      ELEVENLABS_API_KEY: envObj.ELEVENLABS_API_KEY || process.env.ELEVENLABS_API_KEY || "",
+      OPENROUTER_API_KEY: envObj.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY || "",
+      FREE_LLM_API_KEY: envObj.FREE_LLM_API_KEY || process.env.FREE_LLM_API_KEY || "",
+      FREE_LLM_BASE_URL: envObj.FREE_LLM_BASE_URL || process.env.FREE_LLM_BASE_URL || "https://api.freellmapi.com/v1",
+      ANTHROPIC_API_KEY: envObj.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY || "",
+      TRYPOST_API_URL: envObj.TRYPOST_API_URL || process.env.TRYPOST_API_URL || "http://trypost:8000/api/v1/posts",
+    }));
+  }
+  if (req.method === "POST" || req.method === "PUT") {
+    const bodyText = await readAll(req);
+    let body = {};
+    try { body = JSON.parse(bodyText.toString("utf8")); } catch {}
+    const updates = {};
+    const allowed = [
+      "ELEVENLABS_API_KEY",
+      "OPENROUTER_API_KEY",
+      "FREE_LLM_API_KEY",
+      "FREE_LLM_BASE_URL",
+      "ANTHROPIC_API_KEY",
+      "TRYPOST_API_URL",
+    ];
+    for (const k of allowed) {
+      if (Object.prototype.hasOwnProperty.call(body, k)) {
+        const val = String(body[k] || "").trim();
+        updates[k] = val;
+        process.env[k] = val;
+      }
+    }
+    if (Object.keys(updates).length) {
+      appendEnv(ROOT_ENV_FILE, updates);
+    }
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify({ ok: true }));
+  }
+  res.writeHead(405);
+  res.end();
+}
+
 const server = http.createServer((req, res) => {
   const u = new URL(req.url, `http://${req.headers.host || `127.0.0.1:${port}`}`);
   const route = u.pathname.startsWith("/media/") ? handleMedia
+    : u.pathname.startsWith("/api/broll") ? handleBroll
+    : u.pathname === "/api/keys" ? handleKeys
     : u.pathname.startsWith("/api/") ? handleApi
     : handleStatic;
   route(req, res, u).catch((err) => {
@@ -219,6 +315,7 @@ const server = http.createServer((req, res) => {
     res.end("server error");
   });
 });
+
 
 // The Worker's 15-min maintenance cron, on a timer (plus once at boot).
 const cronEnv = { ...baseEnv, PUBLIC_BASE_URL: `http://127.0.0.1:${port}` };

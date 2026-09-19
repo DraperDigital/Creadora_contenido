@@ -70,8 +70,9 @@
   .uprow .err { flex: 0 1 auto; }
   .size { color: #94a3b8; font-size: .82rem; }
   .toks { color: #94a3b8; }
-  #login.hidden, #app.hidden, #modal.hidden, #confirmModal.hidden, #previewModal.hidden, #publishModal.hidden { display: none !important; }
-  #modal, #confirmModal, #previewModal, #publishModal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 1rem; z-index: 50; }
+  #login.hidden, #app.hidden, #modal.hidden, #confirmModal.hidden, #previewModal.hidden, #publishModal.hidden, #keysModal.hidden { display: none !important; }
+  #modal, #confirmModal, #previewModal, #publishModal, #keysModal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 1rem; z-index: 50; }
+
 
   #modal .card, #confirmModal .card { width: 100%; max-width: 480px; margin: 0; }
   #previewModal .card { width: 100%; max-width: 640px; margin: 0; }
@@ -136,6 +137,7 @@
 
     <div style="display:flex; justify-content:flex-end; align-items:center; gap:.6rem">
       <div id="meters" class="meters"></div>
+      <button class="small ghost" onclick="openKeysModal()">⚙️ Claves API</button>
       <button class="small ghost" id="restartbtn" hidden onclick="doRestartServer()">Reiniciar servidor</button>
       <button class="small ghost" onclick="doLogout()">Salir</button>
     </div>
@@ -167,6 +169,15 @@
     </div>
     <div class="settings-grid" style="margin-top:1rem">
       <div class="setrow">
+        <label>Tipografía Cinética (Remotion)</label>
+        <select id="captionstyle" onchange="onSettingsChange()">
+          <option value="hormozi">⚡ Hormozi Neon</option>
+          <option value="hyperframes">💥 Hyperframes Kinetic</option>
+          <option value="typewriter">✍️ Kinetic Typewriter</option>
+          <option value="minimalist">🎨 Minimalist Editorial</option>
+        </select>
+      </div>
+      <div class="setrow">
         <label>Calidad de animación</label>
         <select id="animq" onchange="onSettingsChange()">
           <option value="low">Baja</option>
@@ -184,6 +195,7 @@
         </select>
       </div>
     </div>
+
 
     <div style="margin-top:1.2rem;margin-bottom:.6rem">
       <span class="seclbl-badge">🖼️ Entregables</span>
@@ -207,6 +219,17 @@
     <p class="hint" style="margin-top:1rem;color:#64748b">Configuración guardada para los próximos videos que subas.</p>
     <p id="setmsg" class="err" hidden></p>
   </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem">
+      <span class="seclbl-badge">🎬 Biblioteca de B-Rolls y Recursos</span>
+      <button class="small ghost" onclick="$('brollfile').click()">+ Subir B-Roll</button>
+    </div>
+    <input type="file" id="brollfile" accept=".mp4,.mov,.m4v,.png,.jpg,.jpeg" multiple hidden onchange="uploadBrollFiles()">
+    <div id="brollgrid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(130px, 1fr));gap:0.8rem;margin-top:0.6rem"></div>
+    <p id="brollmsg" class="err" hidden style="margin-top:0.5rem"></p>
+  </div>
+
 
 
   <div id="cards"></div>
@@ -278,6 +301,39 @@
     </div>
   </div>
 </div>
+
+<div id="keysModal" class="hidden">
+  <div class="card" style="width:100%;max-width:540px;background:#181924;padding:1.8rem;border-radius:16px;color:#fff;box-shadow:0 20px 40px rgba(0,0,0,0.85)">
+    <h3 style="margin-top:0">⚙️ Configuración & Claves API</h3>
+    <p style="font-size:0.85rem;color:#94a3b8">Gestiona tus API Keys y endpoints sin tocar archivos de servidor:</p>
+
+    <label style="display:block;margin-top:0.8rem;font-size:0.82rem;font-weight:600;color:#c084fc">ElevenLabs API Key (Transcripción & Voz)</label>
+    <input type="password" id="keyEleven" placeholder="sk_...">
+
+    <label style="display:block;margin-top:0.8rem;font-size:0.82rem;font-weight:600;color:#818cf8">OpenRouter API Key (Multi-IA Failover)</label>
+    <input type="password" id="keyOpenRouter" placeholder="sk-or-v1-...">
+
+    <label style="display:block;margin-top:0.8rem;font-size:0.82rem;font-weight:600;color:#38bdf8">FreeLLMAPI Key & Endpoint (Modelos Gratis)</label>
+    <div style="display:flex;gap:0.5rem">
+      <input type="password" id="keyFreeLLM" placeholder="sk-free-..." style="flex:1">
+      <input type="text" id="urlFreeLLM" placeholder="https://api.freellmapi.com/v1" style="flex:1">
+    </div>
+
+    <label style="display:block;margin-top:0.8rem;font-size:0.82rem;font-weight:600;color:#f472b6">Anthropic API Key (Claude Directo)</label>
+    <input type="password" id="keyAnthropic" placeholder="sk-ant-...">
+
+    <label style="display:block;margin-top:0.8rem;font-size:0.82rem;font-weight:600;color:#4ade80">Trypost Publisher API URL</label>
+    <input type="text" id="urlTrypost" placeholder="http://trypost:8000/api/v1/posts">
+
+    <div id="keysMsg" style="margin-top:0.8rem;font-size:0.85rem;color:#fca5a5"></div>
+
+    <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:1.2rem">
+      <button class="ghost" onclick="closeKeysModal()">Cancelar</button>
+      <button id="saveKeysBtn" onclick="saveKeys()">💾 Guardar Cambios</button>
+    </div>
+  </div>
+</div>
+
 
 <script>
 
@@ -919,6 +975,24 @@ function parseStageDetail(j) {
   return (sd && typeof sd === "object") ? sd : null;
 }
 
+const STAGE_PCT = {
+  queued: 5, claimed: 10, desilence: 15, transcribe: 30,
+  edit_cut: 45, apply_cut: 60, plan: 70, animate: 82,
+  captions: 92, quotes: 95, carousel: 96, finalize: 98, done: 100
+};
+
+function calcJobProgress(j) {
+  if (j.status === "done") return 100;
+  if (j.status === "failed" || j.status === "canceled") return 0;
+  let base = STAGE_PCT[j.stage] || STAGE_PCT[j.status] || 15;
+  const sd = parseStageDetail(j);
+  if (j.stage === "animate" && sd && sd.scene && sd.total) {
+    const fraction = Number(sd.scene) / Number(sd.total);
+    base = Math.round(75 + fraction * 15);
+  }
+  return Math.min(99, Math.max(5, base));
+}
+
 function statusChip(j) {
   const active = ACTIVE_STATUSES.includes(j.status);
   let label;
@@ -933,8 +1007,24 @@ function statusChip(j) {
   } else {
     label = STATUS_LABEL[j.status] || j.status;
   }
+  
+  if (active) {
+    const pct = calcJobProgress(j);
+    return `
+      <div style="display:inline-flex;flex-direction:column;gap:0.3rem;width:100%;max-width:260px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <span class="st st-${j.status}">${label}</span>
+          <span style="font-size:0.75rem;font-weight:700;color:#c084fc;">${pct}%</span>
+        </div>
+        <div style="width:100%;height:6px;background:rgba(255,255,255,0.1);border-radius:99px;overflow:hidden;">
+          <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,#9333ea,#6366f1);transition:width 0.4s ease;"></div>
+        </div>
+      </div>
+    `;
+  }
   return `<span class="st st-${j.status}">${label}</span>`;
 }
+
 
 function timeCell(j) {
   const start = new Date(j.created_at).getTime();
@@ -1330,10 +1420,115 @@ function tickTimes() {
   }
 }
 
+async function openKeysModal() {
+  $("keysMsg").textContent = "";
+  try {
+    const res = await api("/api/keys");
+    if (res.ok) {
+      const data = await res.json();
+      $("keyEleven").value = data.ELEVENLABS_API_KEY || "";
+      $("keyOpenRouter").value = data.OPENROUTER_API_KEY || "";
+      $("keyFreeLLM").value = data.FREE_LLM_API_KEY || "";
+      $("urlFreeLLM").value = data.FREE_LLM_BASE_URL || "";
+      $("keyAnthropic").value = data.ANTHROPIC_API_KEY || "";
+      $("urlTrypost").value = data.TRYPOST_API_URL || "";
+    }
+  } catch {}
+  $("keysModal").classList.remove("hidden");
+}
+
+function closeKeysModal() {
+  $("keysModal").classList.add("hidden");
+}
+
+async function saveKeys() {
+  $("saveKeysBtn").disabled = true;
+  $("keysMsg").textContent = "Guardando claves...";
+  try {
+    const body = {
+      ELEVENLABS_API_KEY: $("keyEleven").value.trim(),
+      OPENROUTER_API_KEY: $("keyOpenRouter").value.trim(),
+      FREE_LLM_API_KEY: $("keyFreeLLM").value.trim(),
+      FREE_LLM_BASE_URL: $("urlFreeLLM").value.trim(),
+      ANTHROPIC_API_KEY: $("keyAnthropic").value.trim(),
+      TRYPOST_API_URL: $("urlTrypost").value.trim(),
+    };
+    const res = await api("/api/keys", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) {
+      closeKeysModal();
+      alert("¡Claves API guardadas exitosamente!");
+    } else {
+      const data = await res.json().catch(() => ({}));
+      $("keysMsg").textContent = data.error || "Error al guardar";
+    }
+  } catch (e) {
+    $("keysMsg").textContent = e.message;
+  } finally {
+    $("saveKeysBtn").disabled = false;
+  }
+}
+
+async function loadBrollLibrary() {
+  const grid = $("brollgrid");
+  if (!grid) return;
+  try {
+    const res = await api("/api/broll");
+    if (!res.ok) return;
+    const items = await res.json();
+    if (!items || !items.length) {
+      grid.innerHTML = `<p style="font-size:0.8rem;color:#64748b;grid-column:1/-1;margin:0">No hay B-Rolls cargados aún. Haz clic en '+ Subir B-Roll'.</p>`;
+      return;
+    }
+    grid.innerHTML = items.map((item) => {
+      const url = `/api/broll/file/${encodeURIComponent(item.name)}`;
+      const preview = item.kind === "video"
+        ? `<video src="${url}" style="width:100%;height:75px;object-fit:cover;border-radius:8px;background:#000" preload="metadata"></video>`
+        : `<img src="${url}" style="width:100%;height:75px;object-fit:cover;border-radius:8px">`;
+      return `
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.4rem;text-align:center">
+          ${preview}
+          <div style="font-size:0.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:0.3rem;color:#cbd5e1" title="${esc(item.name)}">${esc(item.name)}</div>
+          <button class="small danger" style="margin-top:0.4rem;padding:0.15rem 0.4rem;font-size:0.7rem;width:100%" onclick="deleteBrollFile('${encodeURIComponent(item.name)}')">🗑️ Eliminar</button>
+        </div>
+      `;
+    }).join("");
+  } catch {}
+}
+
+async function uploadBrollFiles() {
+  const files = [...$("brollfile").files];
+  $("brollfile").value = "";
+  if (!files.length) return;
+  $("brollmsg").hidden = false;
+  $("brollmsg").textContent = "Subiendo recurso...";
+  for (const f of files) {
+    try {
+      await fetch(`/api/broll/upload?filename=${encodeURIComponent(f.name)}`, {
+        method: "POST",
+        body: f,
+      });
+    } catch {}
+  }
+  $("brollmsg").hidden = true;
+  loadBrollLibrary();
+}
+
+async function deleteBrollFile(name) {
+  try {
+    await api(`/api/broll/delete/${name}`, { method: "POST" });
+    loadBrollLibrary();
+  } catch {}
+}
+
 async function refresh() {
   try {
     const jobs = await (await api("/api/jobs")).json();
     renderCards(jobs);
+    loadBrollLibrary();
   } catch { /* logged out */ }
 }
 
@@ -1344,6 +1539,7 @@ function startTimers() {
   if (!settingsTimer) settingsTimer = setInterval(() => { if (!$("app").classList.contains("hidden")) loadSettings(); }, 30000);
   if (!tickTimer) tickTimer = setInterval(tickTimes, 1000);
 }
+
 
 (async function init() {
   applyAdminUI();
