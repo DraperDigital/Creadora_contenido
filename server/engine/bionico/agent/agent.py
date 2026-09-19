@@ -139,27 +139,67 @@ def sum_run_tokens(run_id: str | None, pipeline_dir: Path) -> int | None:
     return total if seen else None
 
 
-def read_usage_metrics() -> dict | None:
+def resolve_active_ai_info() -> dict:
     try:
-        creds = json.loads(CREDENTIALS_PATH.read_text(encoding="utf-8"))
-        token = (creds.get("claudeAiOauth") or {}).get("accessToken")
-        if not token:
-            return None
-        req = urllib.request.Request(USAGE_URL, headers={
-            "Authorization": "Bearer %s" % token,
-            "anthropic-beta": "oauth-2025-04-20",
-            "User-Agent": "bionico-agent/1.0",
-        })
-        with urllib.request.urlopen(req, timeout=20) as r:
-            data = json.loads(r.read())
-        out = {}
-        for key, prefix in (("five_hour", "five_hour"), ("seven_day", "seven_day")):
-            block = data.get(key) or {}
-            out[prefix + "_pct"] = block.get("utilization")
-            out[prefix + "_resets_at"] = block.get("resets_at")
-        return out
+        from contenido_bionico.shared.config import read_env_file
+        env_vars = read_env_file()
     except Exception:
-        return None
+        env_vars = {}
+    provider = (env_vars.get("AI_PROVIDER") or os.environ.get("AI_PROVIDER") or "auto").lower()
+    model = env_vars.get("AI_MODEL_CHOICE") or os.environ.get("AI_MODEL_CHOICE") or "default"
+
+    freellm_key = env_vars.get("FREE_LLM_API_KEY") or os.environ.get("FREE_LLM_API_KEY")
+    openrouter_key = env_vars.get("OPENROUTER_API_KEY") or os.environ.get("OPENROUTER_API_KEY")
+    anthropic_key = env_vars.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_API_KEY")
+
+    active_provider = "Claude Suscripción"
+    active_model = model if model != "default" else "claude-3-5-sonnet"
+
+    if provider == "freellm" or (provider == "auto" and freellm_key):
+        active_provider = "FreeLLMAPI"
+        active_model = model if model != "default" else "gpt-4o-mini"
+    elif provider == "openrouter" or (provider == "auto" and openrouter_key):
+        active_provider = "OpenRouter"
+        active_model = model if model != "default" else "anthropic/claude-3.5-sonnet"
+    elif provider == "anthropic" or (provider == "auto" and anthropic_key):
+        active_provider = "Anthropic API"
+        active_model = model if model != "default" else "claude-3-5-sonnet-20241022"
+
+    return {"active_provider": active_provider, "active_model": active_model}
+
+
+_ACTIVE_AI_RE = re.compile(r"\[pipeline\] active_ai: provider=(.*?)\s+model=(.*)")
+
+
+def parse_active_ai_from_log(log_text: str) -> dict | None:
+    for line in reversed(log_text.splitlines()):
+        m = _ACTIVE_AI_RE.search(line)
+        if m:
+            return {"active_provider": m.group(1).strip(), "active_model": m.group(2).strip()}
+    return None
+
+
+def read_usage_metrics() -> dict | None:
+    out = resolve_active_ai_info()
+    try:
+        if CREDENTIALS_PATH.exists():
+            creds = json.loads(CREDENTIALS_PATH.read_text(encoding="utf-8"))
+            token = (creds.get("claudeAiOauth") or {}).get("accessToken")
+            if token:
+                req = urllib.request.Request(USAGE_URL, headers={
+                    "Authorization": "Bearer %s" % token,
+                    "anthropic-beta": "oauth-2025-04-20",
+                    "User-Agent": "bionico-agent/1.0",
+                })
+                with urllib.request.urlopen(req, timeout=10) as r:
+                    data = json.loads(r.read())
+                for key, prefix in (("five_hour", "five_hour"), ("seven_day", "seven_day")):
+                    block = data.get(key) or {}
+                    out[prefix + "_pct"] = block.get("utilization")
+                    out[prefix + "_resets_at"] = block.get("resets_at")
+    except Exception:
+        pass
+    return out
 
 
 def agent_event(work_dir: Path, event: str, **fields) -> None:
@@ -797,7 +837,10 @@ def _tick_job(client: CloudClient, cfg, beats: dict[str, float], now: float,
     else:  # pending / running -> heartbeat
         tail = job_log_tail(rec)
         stage = parse_stage(tail)
-        detail = parse_stage_detail(tail)
+        detail = parse_stage_detail(tail) or {}
+        ai_info = parse_active_ai_from_log(tail) or resolve_active_ai_info()
+        detail["provider"] = ai_info.get("active_provider")
+        detail["model"] = ai_info.get("active_model")
         if float(rec.get("defer_until") or 0) > now:
             stage = "quota"  # waiting for the Claude usage window to reset
         # Default (None, None): an unknown job with no stage yet must NOT count

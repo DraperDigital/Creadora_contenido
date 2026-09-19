@@ -145,6 +145,7 @@
     <h1 class="brand-title" style="margin:0;font-size:1.4rem"><span>✨ CREADORA DE CONTENIDO</span></h1>
 
     <div style="display:flex; justify-content:flex-end; align-items:center; gap:.6rem">
+      <div id="aiPill" class="seclbl-badge" style="background:rgba(168,85,247,0.15);border-color:rgba(168,85,247,0.3);color:#e9d5ff">🤖 IA: Cargando...</div>
       <div id="meters" class="meters"></div>
       <button class="small ghost" onclick="openKeysModal()">⚙️ Claves API</button>
       <button class="small ghost" id="restartbtn" hidden onclick="doRestartServer()">Reiniciar servidor</button>
@@ -253,7 +254,8 @@
           <span class="seclbl-badge">📋 Checklist de Ejecución</span>
           <span id="liveBadge" class="st st-canceled" style="font-size:0.7rem">En espera</span>
         </div>
-        <p style="font-size:0.78rem;color:#94a3b8;margin-top:-0.3rem;margin-bottom:0.8rem">Estado en tiempo real de cada fase del pipeline:</p>
+        <div style="font-size:0.76rem;color:#c084fc;margin-top:-0.4rem;margin-bottom:0.6rem;font-weight:600">🤖 IA Activa: <span id="sideAiText" style="color:#f8fafc">Claude Suscripción</span></div>
+        <p style="font-size:0.78rem;color:#94a3b8;margin-top:-0.1rem;margin-bottom:0.8rem">Estado en tiempo real de cada fase del pipeline:</p>
         <div id="pipelineChecklist" class="checklist-container"></div>
       </div>
     </div>
@@ -345,7 +347,35 @@
     <label style="display:block;margin-top:0.8rem;font-size:0.82rem;font-weight:600;color:#f472b6">Anthropic API Key (Claude Directo)</label>
     <input type="password" id="keyAnthropic" placeholder="sk-ant-...">
 
-    <label style="display:block;margin-top:0.8rem;font-size:0.82rem;font-weight:600;color:#4ade80">Trypost Publisher API URL</label>
+    <div style="border-top:1px solid rgba(255,255,255,0.1);margin-top:1.1rem;padding-top:1rem">
+      <label style="display:block;font-size:0.84rem;font-weight:700;color:#c084fc">🤖 Proveedor de IA Activo / Prioridad</label>
+      <select id="selectAiProvider" style="width:100%;margin-top:0.3rem">
+        <option value="auto">🤖 Auto-Failover (Inteligente: Suscripción ➔ FreeLLM ➔ OpenRouter)</option>
+        <option value="freellm">⚡ FreeLLMAPI (Modelos Gratuitos)</option>
+        <option value="openrouter">🌐 OpenRouter API (Multi-Cloud)</option>
+        <option value="anthropic">🔑 Anthropic API Key Directa</option>
+        <option value="subscription">💻 Claude Suscripción Local</option>
+      </select>
+    </div>
+
+    <div style="margin-top:0.8rem">
+      <label style="display:block;font-size:0.84rem;font-weight:700;color:#818cf8">🧠 Modelo de IA para Tareas de Edición</label>
+      <div style="display:flex;gap:0.5rem">
+        <select id="selectAiModel" style="flex:1" onchange="if(this.value!=='custom') $('inputAiModelCustom').value=this.value">
+          <option value="default">⚡ Modelo recomendado por defecto</option>
+          <option value="gpt-4o-mini">🤖 gpt-4o-mini (FreeLLM / OpenRouter)</option>
+          <option value="claude-3-5-sonnet-20241022">🧠 claude-3-5-sonnet-20241022</option>
+          <option value="claude-3-7-sonnet-20250219">🚀 claude-3-7-sonnet-20250219</option>
+          <option value="deepseek/deepseek-r1">🧪 deepseek/deepseek-r1</option>
+          <option value="google/gemini-2.5-flash">⚡ google/gemini-2.5-flash</option>
+          <option value="qwen-2.5-72b-instruct">🌐 qwen-2.5-72b-instruct</option>
+          <option value="custom">✏️ Personalizado (Escribir al lado)</option>
+        </select>
+        <input type="text" id="inputAiModelCustom" placeholder="Modelo personalizado..." style="flex:1">
+      </div>
+    </div>
+
+    <label style="display:block;margin-top:0.9rem;font-size:0.82rem;font-weight:600;color:#4ade80">Trypost Publisher API URL</label>
     <input type="text" id="urlTrypost" placeholder="http://trypost:8000/api/v1/posts">
 
     <div id="keysMsg" style="margin-top:0.8rem;font-size:0.85rem;color:#fca5a5"></div>
@@ -529,6 +559,11 @@ function fmtDayTime(iso) {
 }
 
 function renderMeters(m) {
+  if (m && (m.active_provider || m.active_model)) {
+    const aiTxt = `🤖 IA: ${m.active_provider || 'Claude'} (${m.active_model || 'Sonnet'})`;
+    if ($("aiPill")) $("aiPill").textContent = aiTxt;
+    if ($("sideAiText")) $("sideAiText").textContent = `${m.active_provider || 'Claude'} (${m.active_model || 'Sonnet'})`;
+  }
   const el = $("meters");
   if (!isAdmin()) { el.innerHTML = ""; return; }
   if (!m || !m.reported_at || (Date.now() - m.reported_at) >= 30 * 60 * 1000) {
@@ -1337,8 +1372,12 @@ function versionRow(j) {
   const sizeTxt = (isOriginalVersion(j) && j.size_bytes) ? ` <span class="size">${fmtBytes(j.size_bytes)}</span>` : "";
   // Per-version (non-cumulative) token cost — operator-facing, hidden for creators.
   const tokTxt = (isAdmin() && j.tokens_total) ? `<span class="toks">${fmtTokens(j.tokens_total)}<span class="u">tok</span></span>` : "";
+  const sd = parseStageDetail(j);
+  const aiBadge = (sd && (sd.provider || sd.model))
+    ? `<div style="font-size:0.75rem;color:#c084fc;margin-top:0.15rem">🤖 ${esc(sd.model || '')} <small style="color:#94a3b8">(${esc(sd.provider || '')})</small></div>`
+    : "";
   return `<tr>
-    <td><span class="vlabel">${esc(versionLabel(j))}</span>${sizeTxt}${instr}${err}</td>
+    <td><span class="vlabel">${esc(versionLabel(j))}</span>${sizeTxt}${aiBadge}${instr}${err}</td>
     <td class="statuscell">${statusChip(j)}</td>
     <td class="timecell" data-id="${j.id}">${timeCell(j)}</td>
     <td>${tokTxt}</td>
@@ -1525,6 +1564,17 @@ async function openKeysModal() {
       $("urlFreeLLM").value = data.FREE_LLM_BASE_URL || "";
       $("keyAnthropic").value = data.ANTHROPIC_API_KEY || "";
       $("urlTrypost").value = data.TRYPOST_API_URL || "";
+      if ($("selectAiProvider")) $("selectAiProvider").value = data.AI_PROVIDER || "auto";
+      const modelVal = data.AI_MODEL_CHOICE || "default";
+      if ($("selectAiModel")) {
+        const optionExists = [...$("selectAiModel").options].some((o) => o.value === modelVal);
+        if (optionExists) {
+          $("selectAiModel").value = modelVal;
+        } else {
+          $("selectAiModel").value = "custom";
+        }
+      }
+      if ($("inputAiModelCustom")) $("inputAiModelCustom").value = modelVal;
     }
   } catch {}
   $("keysModal").classList.remove("hidden");
@@ -1537,6 +1587,10 @@ function closeKeysModal() {
 async function saveKeys() {
   $("saveKeysBtn").disabled = true;
   $("keysMsg").textContent = "Guardando claves...";
+  const customMod = $("inputAiModelCustom") ? $("inputAiModelCustom").value.trim() : "";
+  const selMod = $("selectAiModel") ? $("selectAiModel").value : "default";
+  const finalModel = (selMod === "custom" || customMod) ? (customMod || selMod) : selMod;
+
   try {
     const body = {
       ELEVENLABS_API_KEY: $("keyEleven").value.trim(),
@@ -1545,6 +1599,8 @@ async function saveKeys() {
       FREE_LLM_BASE_URL: $("urlFreeLLM").value.trim(),
       ANTHROPIC_API_KEY: $("keyAnthropic").value.trim(),
       TRYPOST_API_URL: $("urlTrypost").value.trim(),
+      AI_PROVIDER: $("selectAiProvider") ? $("selectAiProvider").value : "auto",
+      AI_MODEL_CHOICE: finalModel,
     };
     const res = await api("/api/keys", {
       method: "POST",
@@ -1553,7 +1609,8 @@ async function saveKeys() {
     });
     if (res.ok) {
       closeKeysModal();
-      alert("¡Claves API guardadas exitosamente!");
+      alert("¡Claves API y configuración de IA guardadas exitosamente!");
+      refresh();
     } else {
       const data = await res.json().catch(() => ({}));
       $("keysMsg").textContent = data.error || "Error al guardar";

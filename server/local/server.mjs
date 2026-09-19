@@ -270,6 +270,8 @@ async function handleKeys(req, res, u) {
       FREE_LLM_BASE_URL: envObj.FREE_LLM_BASE_URL || process.env.FREE_LLM_BASE_URL || "https://api.freellmapi.com/v1",
       ANTHROPIC_API_KEY: envObj.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY || "",
       TRYPOST_API_URL: envObj.TRYPOST_API_URL || process.env.TRYPOST_API_URL || "http://trypost:8000/api/v1/posts",
+      AI_PROVIDER: envObj.AI_PROVIDER || process.env.AI_PROVIDER || "auto",
+      AI_MODEL_CHOICE: envObj.AI_MODEL_CHOICE || process.env.AI_MODEL_CHOICE || "default",
     }));
   }
   if (req.method === "POST" || req.method === "PUT") {
@@ -284,6 +286,8 @@ async function handleKeys(req, res, u) {
       "FREE_LLM_BASE_URL",
       "ANTHROPIC_API_KEY",
       "TRYPOST_API_URL",
+      "AI_PROVIDER",
+      "AI_MODEL_CHOICE",
     ];
     for (const k of allowed) {
       if (Object.prototype.hasOwnProperty.call(body, k)) {
