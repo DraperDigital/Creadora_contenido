@@ -1851,9 +1851,41 @@ function updateAiBadge(provider, model) {
   const p = provider || currentKeysData.AI_PROVIDER || "auto";
   const m = model || currentKeysData.AI_MODEL_CHOICE || "default";
 
-  const freeKey = currentKeysData.FREE_LLM_API_KEY;
-  const openKey = currentKeysData.OPENROUTER_API_KEY;
-  const antKey = currentKeysData.ANTHROPIC_API_KEY;
+  const freeKey = !!(currentKeysData.FREE_LLM_API_KEY && currentKeysData.FREE_LLM_API_KEY.trim());
+  const openKey = !!(currentKeysData.OPENROUTER_API_KEY && currentKeysData.OPENROUTER_API_KEY.trim());
+  const antKey = !!(currentKeysData.ANTHROPIC_API_KEY && currentKeysData.ANTHROPIC_API_KEY.trim());
+
+  const updateProviderSelect = (selectId) => {
+    const el = $(selectId);
+    if (!el) return;
+    for (let opt of el.options) {
+      if (opt.value === "freellm") {
+        opt.textContent = freeKey ? "⚡ FreeLLMAPI (Gratis / Configurada ✅)" : "⚡ FreeLLMAPI (Sin Key 🔑)";
+      } else if (opt.value === "openrouter") {
+        opt.textContent = openKey ? "🌐 OpenRouter API (Configurada ✅)" : "🌐 OpenRouter API (Sin Key 🔑)";
+      } else if (opt.value === "anthropic") {
+        opt.textContent = antKey ? "🔑 Anthropic API Key (Configurada ✅)" : "🔑 Anthropic API Key (Sin Key 🔑)";
+      }
+    }
+  };
+
+  const updateModelSelect = (selectId) => {
+    const el = $(selectId);
+    if (!el) return;
+    for (let opt of el.options) {
+      if (["deepseek/deepseek-r1", "google/gemini-2.5-flash", "qwen-2.5-72b-instruct"].includes(opt.value)) {
+        const baseLabel = opt.value === "deepseek/deepseek-r1" ? "🧪 deepseek/deepseek-r1"
+          : opt.value === "google/gemini-2.5-flash" ? "⚡ google/gemini-2.5-flash"
+          : "🌐 qwen-2.5-72b-instruct";
+        opt.textContent = openKey ? `${baseLabel} (OpenRouter ✅)` : `${baseLabel} (OpenRouter - Sin Key 🔑)`;
+      }
+    }
+  };
+
+  updateProviderSelect("mainAiProvider");
+  updateProviderSelect("selectAiProvider");
+  updateModelSelect("mainAiModel");
+  updateModelSelect("selectAiModel");
 
   let labelP = "Claude Suscripción";
   if (p === "freellm" || (p === "auto" && freeKey)) {
@@ -1888,6 +1920,26 @@ async function loadKeysConfig() {
 async function saveMainAiConfig() {
   const p = $("mainAiProvider") ? $("mainAiProvider").value : "auto";
   const m = $("mainAiModel") ? $("mainAiModel").value : "default";
+
+  const freeKey = !!(currentKeysData.FREE_LLM_API_KEY && currentKeysData.FREE_LLM_API_KEY.trim());
+  const openKey = !!(currentKeysData.OPENROUTER_API_KEY && currentKeysData.OPENROUTER_API_KEY.trim());
+  const antKey = !!(currentKeysData.ANTHROPIC_API_KEY && currentKeysData.ANTHROPIC_API_KEY.trim());
+
+  if (p === "openrouter" && !openKey) {
+    alert("⚠️ No has ingresado tu API Key de OpenRouter. Se abrirá la ventana para que la ingreses.");
+    openKeysModal();
+    return;
+  }
+  if (p === "anthropic" && !antKey) {
+    alert("⚠️ No has ingresado tu API Key de Anthropic. Se abrirá la ventana para que la ingreses.");
+    openKeysModal();
+    return;
+  }
+  if (["deepseek/deepseek-r1", "google/gemini-2.5-flash", "qwen-2.5-72b-instruct"].includes(m) && !openKey) {
+    alert(`⚠️ El modelo '${m}' requiere una API Key de OpenRouter que aún no has ingresado. Se abrirá la ventana para que la agregues.`);
+    openKeysModal();
+    return;
+  }
 
   updateAiBadge(p, m);
 
