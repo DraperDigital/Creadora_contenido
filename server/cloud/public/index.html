@@ -184,6 +184,14 @@
         <p id="upmsg" class="err"></p>
       </div>
 
+      <div style="margin-top:1.2rem;margin-bottom:0.4rem;display:flex;align-items:center;justify-content:space-between">
+        <span class="seclbl-badge">🎬 Mis Videos & Entregables</span>
+      </div>
+      <div id="cards"></div>
+      <div id="bulkbar" class="card" hidden style="margin-top:0.4rem;margin-bottom:1rem">
+        <button class="small danger" onclick="openConfirmDeleteAll()">Borrar todo</button>
+      </div>
+
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
           <span class="seclbl-badge">🎥 Opciones de Edición</span>
@@ -257,11 +265,6 @@
         <div id="brollgrid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(130px, 1fr));gap:0.8rem;margin-top:0.6rem"></div>
         <p id="brollmsg" class="err" hidden style="margin-top:0.5rem"></p>
       </div>
-
-      <div id="cards"></div>
-      <div id="bulkbar" class="card" hidden>
-        <button class="small danger" onclick="openConfirmDeleteAll()">Borrar todo</button>
-      </div>
     </div>
 
     <!-- Right Column: Real-time Pipeline Checklist Side Panel -->
@@ -271,7 +274,17 @@
           <span class="seclbl-badge">📋 Checklist de Ejecución</span>
           <span id="liveBadge" class="st st-canceled" style="font-size:0.7rem">En espera</span>
         </div>
-        <div style="font-size:0.76rem;color:#c084fc;margin-top:-0.4rem;margin-bottom:0.6rem;font-weight:600">🤖 IA Activa: <span id="sideAiText" style="color:#f8fafc">Claude Suscripción</span></div>
+
+        <div id="activeVideoSummary" style="background:rgba(10,11,16,0.75);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.75rem;margin-bottom:0.8rem">
+          <div style="font-size:0.7rem;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:0.04em">🎬 Video Seleccionado</div>
+          <div id="sumVidName" style="font-size:0.88rem;font-weight:700;color:#f8fafc;margin-top:0.2rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Ningún video procesado</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:0.4rem">
+            <span id="sumVidStatus" class="st st-canceled" style="font-size:0.7rem">Sin videos</span>
+            <span id="sumVidTime" style="font-size:0.75rem;color:#94a3b8;font-weight:600">--:--</span>
+          </div>
+        </div>
+
+        <div style="font-size:0.76rem;color:#c084fc;margin-top:0.2rem;margin-bottom:0.6rem;font-weight:600">🤖 IA Activa: <span id="sideAiText" style="color:#f8fafc">Claude Suscripción</span></div>
         <p style="font-size:0.78rem;color:#94a3b8;margin-top:-0.1rem;margin-bottom:0.8rem">Estado en tiempo real de cada fase del pipeline:</p>
         <div id="pipelineChecklist" class="checklist-container"></div>
       </div>
@@ -1452,12 +1465,36 @@ const STAGE_ORDER = {
   captions: 7, quotes: 7, carousel: 7, finalize: 8, done: 9
 };
 
+function updateActiveVideoSummary(j) {
+  const nameEl = $("sumVidName");
+  const statusEl = $("sumVidStatus");
+  const timeEl = $("sumVidTime");
+  if (!nameEl || !statusEl || !timeEl) return;
+
+  if (!j) {
+    nameEl.textContent = "Ningún video subido aún";
+    statusEl.className = "st st-canceled";
+    statusEl.textContent = "Sin videos";
+    timeEl.textContent = "--:--";
+    return;
+  }
+
+  nameEl.textContent = j.filename || "video.mp4";
+  nameEl.title = j.filename || "";
+  statusEl.className = `st st-${j.status}`;
+  statusEl.textContent = STATUS_LABEL[j.status] || j.status;
+  timeEl.textContent = timeCell(j);
+}
+
 function renderPipelineChecklist(jobs) {
   const container = $("pipelineChecklist");
   const badge = $("liveBadge");
   if (!container || !badge) return;
 
   const activeJob = (jobs || []).find((j) => ACTIVE_STATUSES.includes(j.status));
+  const targetJob = activeJob || (jobs || []).find((j) => j.status === "done") || (jobs || [])[0];
+
+  updateActiveVideoSummary(targetJob);
 
   if (!activeJob) {
     const lastDone = (jobs || []).find((j) => j.status === "done");
