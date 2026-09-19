@@ -622,10 +622,10 @@ function fmtDayTime(iso) {
 }
 
 function renderMeters(m) {
-  if (m && (m.active_provider || m.active_model)) {
-    const aiTxt = `🤖 IA: ${m.active_provider || 'Claude'} (${m.active_model || 'Sonnet'})`;
-    if ($("aiPill")) $("aiPill").textContent = aiTxt;
-    if ($("sideAiText")) $("sideAiText").textContent = `${m.active_provider || 'Claude'} (${m.active_model || 'Sonnet'})`;
+  if (m && m.active_provider) {
+    updateAiBadge(m.active_provider, m.active_model);
+  } else if (typeof currentKeysData !== "undefined" && currentKeysData) {
+    updateAiBadge();
   }
   const el = $("meters");
   if (!isAdmin()) { el.innerHTML = ""; return; }

@@ -29,6 +29,7 @@ const DATA = process.env.BIONICO_LOCAL_DATA ? resolve(process.env.BIONICO_LOCAL_
 const ENV_FILE = process.env.BIONICO_LOCAL_ENV ? resolve(process.env.BIONICO_LOCAL_ENV) : join(HERE, ".env");
 const CLOUD_ENV_FILE = process.env.BIONICO_CLOUD_ENV
   ? resolve(process.env.BIONICO_CLOUD_ENV) : join(REPO, "server", "cloud", ".env");
+const ROOT_ENV_FILE = join(REPO, ".env");
 const PUBLIC_DIR = join(REPO, "server", "cloud", "public");
 const MIGRATIONS = join(REPO, "server", "cloud", "migrations");
 
@@ -40,10 +41,19 @@ const parseEnv = (text) => Object.fromEntries(
     .map((l) => [l.slice(0, l.indexOf("=")).trim(), l.slice(l.indexOf("=") + 1).trim()]),
 );
 const loadEnvFile = (p) => { try { return parseEnv(readFileSync(p, "utf8")); } catch { return {}; } };
-const appendEnv = (p, obj) => {
-  const lines = Object.entries(obj).map(([k, v]) => `${k}=${v}`).join("\n");
-  let cur = ""; try { cur = readFileSync(p, "utf8"); } catch { /* new file */ }
-  writeFileSync(p, cur + (cur && !cur.endsWith("\n") ? "\n" : "") + lines + "\n");
+const upsertEnv = (p, obj) => {
+  let text = "";
+  try { text = readFileSync(p, "utf8"); } catch {}
+  let lines = text.split(/\r?\n/);
+  for (const [k, v] of Object.entries(obj)) {
+    const idx = lines.findIndex((l) => l.trim().startsWith(`${k}=`));
+    if (idx >= 0) {
+      lines[idx] = `${k}=${v}`;
+    } else {
+      lines.push(`${k}=${v}`);
+    }
+  }
+  writeFileSync(p, lines.join("\n").replace(/\n+$/, "\n"));
 };
 
 // server/cloud/.env is how the (unchanged) engine agent finds the dashboard.
@@ -70,7 +80,7 @@ async function bootstrap() {
   if (!cur.SESSION_SECRET) add.SESSION_SECRET = randomBytes(32).toString("hex");
   if (!cur.AGENT_TOKEN) add.AGENT_TOKEN = randomBytes(32).toString("hex");
   if (!cur.DASHBOARD_PASSWORD) add.DASHBOARD_PASSWORD = randomBytes(4).toString("hex");
-  if (Object.keys(add).length) appendEnv(ENV_FILE, add);
+  if (Object.keys(add).length) upsertEnv(ENV_FILE, add);
   const env = { ...cur, ...add };
   const port = Number(process.env.LOCAL_DASHBOARD_PORT || env.LOCAL_DASHBOARD_PORT || 8787);
   writeCloudEnv(`http://127.0.0.1:${port}`, env.AGENT_TOKEN);
@@ -212,7 +222,6 @@ async function handleStatic(req, res, u) {
 import { readdir, unlink } from "node:fs/promises";
 
 const BROLL_DIR = join(REPO, "pipeline", "broll_library");
-const ROOT_ENV_FILE = join(REPO, ".env");
 
 async function handleBroll(req, res, u) {
   await mkdir(BROLL_DIR, { recursive: true });
@@ -297,7 +306,7 @@ async function handleKeys(req, res, u) {
       }
     }
     if (Object.keys(updates).length) {
-      appendEnv(ROOT_ENV_FILE, updates);
+      upsertEnv(ROOT_ENV_FILE, updates);
     }
     res.writeHead(200, { "Content-Type": "application/json" });
     return res.end(JSON.stringify({ ok: true }));
