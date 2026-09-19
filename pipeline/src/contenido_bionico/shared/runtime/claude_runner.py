@@ -460,29 +460,41 @@ def run_claude_code(
             child_env.update(env)
 
         # Dynamic AI Provider & Model Selection
-        ai_provider = os.environ.get("AI_PROVIDER", "auto").lower()
-        ai_model_choice = os.environ.get("AI_MODEL_CHOICE", "").strip()
-        free_llm_key = os.environ.get("FREE_LLM_API_KEY", "").strip()
-        free_llm_url = os.environ.get("FREE_LLM_BASE_URL", "https://api.freellmapi.com/v1").strip()
-        openrouter_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
-        anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+        env_from_file = {}
+        root_env_path = Path(__file__).resolve().parents[4] / ".env"
+        if root_env_path.exists():
+            try:
+                for line in root_env_path.read_text(encoding="utf-8").splitlines():
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        k, v = line.split("=", 1)
+                        env_from_file[k.strip()] = v.strip()
+            except Exception:
+                pass
+
+        ai_provider = (os.environ.get("AI_PROVIDER") or env_from_file.get("AI_PROVIDER") or "auto").lower()
+        ai_model_choice = (os.environ.get("AI_MODEL_CHOICE") or env_from_file.get("AI_MODEL_CHOICE") or "").strip()
+        free_llm_key = (os.environ.get("FREE_LLM_API_KEY") or env_from_file.get("FREE_LLM_API_KEY") or "").strip()
+        free_llm_url = (os.environ.get("FREE_LLM_BASE_URL") or env_from_file.get("FREE_LLM_BASE_URL") or "https://api.freellmapi.com/v1").strip()
+        openrouter_key = (os.environ.get("OPENROUTER_API_KEY") or env_from_file.get("OPENROUTER_API_KEY") or "").strip()
+        anthropic_key = (os.environ.get("ANTHROPIC_API_KEY") or env_from_file.get("ANTHROPIC_API_KEY") or "").strip()
 
         active_provider = "Claude Suscripción"
         active_model = model or "claude-3-5-sonnet"
 
-        if ai_provider == "freellm" or (ai_provider == "auto" and free_llm_key and not _claude_subscription_auth()):
+        if ai_provider == "freellm" or (ai_provider == "auto" and free_llm_key):
             if free_llm_key:
                 child_env["ANTHROPIC_BASE_URL"] = free_llm_url
                 child_env["ANTHROPIC_API_KEY"] = free_llm_key
                 active_provider = "FreeLLMAPI"
                 active_model = ai_model_choice if (ai_model_choice and ai_model_choice != "default") else "gpt-4o-mini"
-        elif ai_provider == "openrouter" or (ai_provider == "auto" and openrouter_key and not free_llm_key and not _claude_subscription_auth()):
+        elif ai_provider == "openrouter" or (ai_provider == "auto" and openrouter_key):
             if openrouter_key:
                 child_env["ANTHROPIC_BASE_URL"] = "https://openrouter.ai/api/v1"
                 child_env["ANTHROPIC_API_KEY"] = openrouter_key
                 active_provider = "OpenRouter"
                 active_model = ai_model_choice if (ai_model_choice and ai_model_choice != "default") else "anthropic/claude-3.5-sonnet"
-        elif ai_provider == "anthropic" or (ai_provider == "auto" and anthropic_key and not _claude_subscription_auth()):
+        elif ai_provider == "anthropic" or (ai_provider == "auto" and anthropic_key):
             if anthropic_key:
                 child_env["ANTHROPIC_API_KEY"] = anthropic_key
                 active_provider = "Anthropic API"
