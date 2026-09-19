@@ -7,9 +7,18 @@
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
-  body { font: 15px/1.6 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: radial-gradient(circle at 50% 0%, rgba(147, 51, 234, 0.18) 0%, rgba(9, 10, 15, 1) 70%), #090a0f; color: #f1f5f9; min-height: 100vh; margin: 0; padding: 2rem 1rem; display: flex; flex-direction: column; align-items: center; }
-  #app { width: 100%; max-width: 860px; }
+  #app { width: 100%; max-width: 1240px; }
+  .dashboard-layout { display: grid; grid-template-columns: 1fr 340px; gap: 1.2rem; align-items: start; width: 100%; }
+  @media (max-width: 980px) {
+    .dashboard-layout { grid-template-columns: 1fr; }
+  }
+  .checklist-container { display: flex; flex-direction: column; gap: 0.55rem; }
+  .chk-step { display: flex; align-items: center; gap: 0.6rem; padding: 0.65rem 0.85rem; background: rgba(10, 11, 16, 0.6); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; font-size: 0.82rem; color: #94a3b8; transition: all 0.2s ease; }
+  .chk-step.done { background: rgba(34, 197, 94, 0.08); border-color: rgba(34, 197, 94, 0.25); color: #bbf7d0; }
+  .chk-step.active { background: rgba(168, 85, 247, 0.14); border-color: rgba(168, 85, 247, 0.4); color: #fff; font-weight: 600; box-shadow: 0 0 15px rgba(168, 85, 247, 0.25); }
+  .chk-icon { font-size: 0.9rem; flex: 0 0 18px; text-align: center; }
   .login-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; width: 100%; }
+
   
   h1.brand-title { font-size: 1.8rem; letter-spacing: .05em; font-weight: 800; text-align: center; margin: .2rem 0 1.2rem; }
   h1.brand-title span { background: linear-gradient(135deg, #c084fc, #818cf8, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 30px rgba(168, 85, 247, 0.35); }
@@ -143,99 +152,113 @@
     </div>
   </header>
 
-  <div class="card upload-card" onclick="if(event.target.tagName !== 'BUTTON') $('file').click()">
-    <input type="file" id="file" accept=".mp4,.mov,.m4v,video/mp4,video/quicktime" multiple hidden onchange="onFilesPicked()">
-    <div class="upload-icon">📤</div>
-    <div class="upload-title">Arrastra tus videos aquí o haz clic para explorar</div>
-    <div class="upload-sub">Soporta videos hablados en formato vertical (.mp4, .mov, .m4v)</div>
-    <button onclick="$('file').click()" id="upbtn" style="margin-top:.4rem">Seleccionar Videos</button>
-    <div id="upqueue" style="margin-top:1rem;text-align:left"></div>
-    <progress id="prog" value="0" max="100" hidden style="margin-top:1rem"></progress>
-    <div id="upfooter" style="margin-top:.8rem"></div>
-    <p id="upmsg" class="err"></p>
-  </div>
-
-  <div class="card">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
-      <span class="seclbl-badge">🎥 Opciones de Edición</span>
-      <span id="savedflash" class="savedflash">✓ Guardado</span>
-    </div>
-    <div class="settings-grid">
-      <label class="chk"><input type="checkbox" id="ftCaptions" checked onchange="onSettingsChange()"><span>Subtítulos</span></label>
-      <label class="chk"><input type="checkbox" id="ftCamera" checked onchange="onSettingsChange()"><span>Cámara</span></label>
-      <label class="chk"><input type="checkbox" id="ftAnimations" checked onchange="onSettingsChange()"><span>Animaciones</span></label>
-      <label class="chk"><input type="checkbox" id="ftMusic" checked onchange="onSettingsChange()"><span>Música</span></label>
-      <label class="chk"><input type="checkbox" id="ftSfx" checked onchange="onSettingsChange()"><span>Efectos de sonido</span></label>
-    </div>
-    <div class="settings-grid" style="margin-top:1rem">
-      <div class="setrow">
-        <label>Tipografía Cinética (Remotion)</label>
-        <select id="captionstyle" onchange="onSettingsChange()">
-          <option value="hormozi">⚡ Hormozi Neon</option>
-          <option value="hyperframes">💥 Hyperframes Kinetic</option>
-          <option value="typewriter">✍️ Kinetic Typewriter</option>
-          <option value="minimalist">🎨 Minimalist Editorial</option>
-        </select>
+  <div class="dashboard-layout">
+    <div class="main-column">
+      <div class="card upload-card" onclick="if(event.target.tagName !== 'BUTTON') $('file').click()">
+        <input type="file" id="file" accept=".mp4,.mov,.m4v,video/mp4,video/quicktime" multiple hidden onchange="onFilesPicked()">
+        <div class="upload-icon">📤</div>
+        <div class="upload-title">Arrastra tus videos aquí o haz clic para explorar</div>
+        <div class="upload-sub">Soporta videos hablados en formato vertical (.mp4, .mov, .m4v)</div>
+        <button onclick="$('file').click()" id="upbtn" style="margin-top:.4rem">Seleccionar Videos</button>
+        <div id="upqueue" style="margin-top:1rem;text-align:left"></div>
+        <progress id="prog" value="0" max="100" hidden style="margin-top:1rem"></progress>
+        <div id="upfooter" style="margin-top:.8rem"></div>
+        <p id="upmsg" class="err"></p>
       </div>
-      <div class="setrow">
-        <label>Calidad de animación</label>
-        <select id="animq" onchange="onSettingsChange()">
-          <option value="low">Baja</option>
-          <option value="mid">Media</option>
-          <option value="high">Alta</option>
-          <option value="max">Máxima</option>
-        </select>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+          <span class="seclbl-badge">🎥 Opciones de Edición</span>
+          <span id="savedflash" class="savedflash">✓ Guardado</span>
+        </div>
+        <div class="settings-grid">
+          <label class="chk"><input type="checkbox" id="ftCaptions" checked onchange="onSettingsChange()"><span>Subtítulos</span></label>
+          <label class="chk"><input type="checkbox" id="ftCamera" checked onchange="onSettingsChange()"><span>Cámara</span></label>
+          <label class="chk"><input type="checkbox" id="ftAnimations" checked onchange="onSettingsChange()"><span>Animaciones</span></label>
+          <label class="chk"><input type="checkbox" id="ftMusic" checked onchange="onSettingsChange()"><span>Música</span></label>
+          <label class="chk"><input type="checkbox" id="ftSfx" checked onchange="onSettingsChange()"><span>Efectos de sonido</span></label>
+        </div>
+        <div class="settings-grid" style="margin-top:1rem">
+          <div class="setrow">
+            <label>Tipografía Cinética (Remotion)</label>
+            <select id="captionstyle" onchange="onSettingsChange()">
+              <option value="hormozi">⚡ Hormozi Neon</option>
+              <option value="hyperframes">💥 Hyperframes Kinetic</option>
+              <option value="typewriter">✍️ Kinetic Typewriter</option>
+              <option value="minimalist">🎨 Minimalist Editorial</option>
+            </select>
+          </div>
+          <div class="setrow">
+            <label>Calidad de animación</label>
+            <select id="animq" onchange="onSettingsChange()">
+              <option value="low">Baja</option>
+              <option value="mid">Media</option>
+              <option value="high">Alta</option>
+              <option value="max">Máxima</option>
+            </select>
+          </div>
+          <div class="setrow">
+            <label>Cantidad de animaciones</label>
+            <select id="animcount" onchange="onSettingsChange()">
+              <option value="few">Pocas</option>
+              <option value="default">Normal</option>
+              <option value="max">Máximas</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-top:1.2rem;margin-bottom:.6rem">
+          <span class="seclbl-badge">🖼️ Entregables</span>
+        </div>
+        <div class="settings-grid">
+          <label class="chk"><input type="checkbox" id="ftCarousel" checked onchange="onSettingsChange()"><span>Carrusel</span></label>
+          <label class="chk"><input type="checkbox" id="ftQuotes" checked onchange="onSettingsChange()"><span>Frases para publicar</span></label>
+        </div>
+
+        <div style="margin-top:1.2rem;margin-bottom:.6rem">
+          <span class="seclbl-badge">📱 Formatos</span>
+        </div>
+        <div class="settings-grid">
+          <label class="chk"><input type="checkbox" id="ftVideosExtra" checked onchange="onSettingsChange()"><span>Videos extra</span></label>
+          <label class="chk"><input type="checkbox" id="ftVideoCarruseles" checked onchange="onSettingsChange()"><span>Video-carruseles</span></label>
+          <label class="chk"><input type="checkbox" id="ftCarruselesExtra" checked onchange="onSettingsChange()"><span>Carruseles extra</span></label>
+          <label class="chk"><input type="checkbox" id="ftImagenes" checked onchange="onSettingsChange()"><span>Imágenes</span></label>
+          <label class="chk"><input type="checkbox" id="ftPosters" checked onchange="onSettingsChange()"><span>Pósters</span></label>
+          <label class="chk"><input type="checkbox" id="ftTextos" checked onchange="onSettingsChange()"><span>Textos</span></label>
+        </div>
+        <p class="hint" style="margin-top:1rem;color:#64748b">Configuración guardada para los próximos videos que subas.</p>
+        <p id="setmsg" class="err" hidden></p>
       </div>
-      <div class="setrow">
-        <label>Cantidad de animaciones</label>
-        <select id="animcount" onchange="onSettingsChange()">
-          <option value="few">Pocas</option>
-          <option value="default">Normal</option>
-          <option value="max">Máximas</option>
-        </select>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem">
+          <span class="seclbl-badge">🎬 Biblioteca de B-Rolls y Recursos</span>
+          <button class="small ghost" onclick="$('brollfile').click()">+ Subir B-Roll</button>
+        </div>
+        <input type="file" id="brollfile" accept=".mp4,.mov,.m4v,.png,.jpg,.jpeg" multiple hidden onchange="uploadBrollFiles()">
+        <div id="brollgrid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(130px, 1fr));gap:0.8rem;margin-top:0.6rem"></div>
+        <p id="brollmsg" class="err" hidden style="margin-top:0.5rem"></p>
+      </div>
+
+      <div id="cards"></div>
+      <div id="bulkbar" class="card" hidden>
+        <button class="small danger" onclick="openConfirmDeleteAll()">Borrar todo</button>
       </div>
     </div>
 
-
-    <div style="margin-top:1.2rem;margin-bottom:.6rem">
-      <span class="seclbl-badge">🖼️ Entregables</span>
+    <!-- Right Column: Real-time Pipeline Checklist Side Panel -->
+    <div class="side-column">
+      <div class="card" style="position:sticky;top:1.5rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem">
+          <span class="seclbl-badge">📋 Checklist de Ejecución</span>
+          <span id="liveBadge" class="st st-canceled" style="font-size:0.7rem">En espera</span>
+        </div>
+        <p style="font-size:0.78rem;color:#94a3b8;margin-top:-0.3rem;margin-bottom:0.8rem">Estado en tiempo real de cada fase del pipeline:</p>
+        <div id="pipelineChecklist" class="checklist-container"></div>
+      </div>
     </div>
-    <div class="settings-grid">
-      <label class="chk"><input type="checkbox" id="ftCarousel" checked onchange="onSettingsChange()"><span>Carrusel</span></label>
-      <label class="chk"><input type="checkbox" id="ftQuotes" checked onchange="onSettingsChange()"><span>Frases para publicar</span></label>
-    </div>
-
-    <div style="margin-top:1.2rem;margin-bottom:.6rem">
-      <span class="seclbl-badge">📱 Formatos</span>
-    </div>
-    <div class="settings-grid">
-      <label class="chk"><input type="checkbox" id="ftVideosExtra" checked onchange="onSettingsChange()"><span>Videos extra</span></label>
-      <label class="chk"><input type="checkbox" id="ftVideoCarruseles" checked onchange="onSettingsChange()"><span>Video-carruseles</span></label>
-      <label class="chk"><input type="checkbox" id="ftCarruselesExtra" checked onchange="onSettingsChange()"><span>Carruseles extra</span></label>
-      <label class="chk"><input type="checkbox" id="ftImagenes" checked onchange="onSettingsChange()"><span>Imágenes</span></label>
-      <label class="chk"><input type="checkbox" id="ftPosters" checked onchange="onSettingsChange()"><span>Pósters</span></label>
-      <label class="chk"><input type="checkbox" id="ftTextos" checked onchange="onSettingsChange()"><span>Textos</span></label>
-    </div>
-    <p class="hint" style="margin-top:1rem;color:#64748b">Configuración guardada para los próximos videos que subas.</p>
-    <p id="setmsg" class="err" hidden></p>
   </div>
 
-  <div class="card">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem">
-      <span class="seclbl-badge">🎬 Biblioteca de B-Rolls y Recursos</span>
-      <button class="small ghost" onclick="$('brollfile').click()">+ Subir B-Roll</button>
-    </div>
-    <input type="file" id="brollfile" accept=".mp4,.mov,.m4v,.png,.jpg,.jpeg" multiple hidden onchange="uploadBrollFiles()">
-    <div id="brollgrid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(130px, 1fr));gap:0.8rem;margin-top:0.6rem"></div>
-    <p id="brollmsg" class="err" hidden style="margin-top:0.5rem"></p>
-  </div>
-
-
-
-  <div id="cards"></div>
-  <div id="bulkbar" class="card" hidden>
-    <button class="small danger" onclick="openConfirmDeleteAll()">Borrar todo</button>
-  </div>
 </div>
 
 <div id="modal" class="hidden">
@@ -1353,6 +1376,76 @@ function renderCards(jobs) {
     </div>`;
   }).join("");
   $("bulkbar").hidden = !jobs.some((j) => TERMINAL_STATUSES.includes(j.status));
+  renderPipelineChecklist(jobs);
+}
+
+const PIPELINE_STEPS = [
+  { id: "preflight", name: "1. Pre-chequeo & Formato (9:16)" },
+  { id: "desilence", name: "2. Remoción de Silencios" },
+  { id: "transcribe", name: "3. Transcripción IA & Subtítulos" },
+  { id: "cut", name: "4. Corte Editorial de Tomas" },
+  { id: "plan", name: "5. Planificación de Escenas" },
+  { id: "animate", name: "6. Animación & B-Rolls" },
+  { id: "captions", name: "7. Estilos Cinéticos (Remotion)" },
+  { id: "finalize", name: "8. Exportación & Entregables V6" },
+];
+
+const STAGE_ORDER = {
+  queued: 0, claimed: 0, preflight: 1, desilence: 2, transcribe: 3,
+  edit_cut: 4, apply_cut: 4, cut: 4, plan: 5, animate: 6,
+  captions: 7, quotes: 7, carousel: 7, finalize: 8, done: 9
+};
+
+function renderPipelineChecklist(jobs) {
+  const container = $("pipelineChecklist");
+  const badge = $("liveBadge");
+  if (!container || !badge) return;
+
+  const activeJob = (jobs || []).find((j) => ACTIVE_STATUSES.includes(j.status));
+
+  if (!activeJob) {
+    badge.className = "st st-canceled";
+    badge.textContent = "En espera";
+    container.innerHTML = PIPELINE_STEPS.map((s) => `
+      <div class="chk-step">
+        <span class="chk-icon" style="color:#64748b">⏳</span>
+        <span>${s.name}</span>
+      </div>
+    `).join("");
+    return;
+  }
+
+  badge.className = `st st-${activeJob.status}`;
+  badge.textContent = STATUS_LABEL[activeJob.status] || activeJob.status;
+
+  const currentStage = activeJob.stage || (activeJob.status === "queued" ? "queued" : "desilence");
+  const currentIdx = STAGE_ORDER[currentStage] !== undefined ? STAGE_ORDER[currentStage] : 1;
+  const sd = parseStageDetail(activeJob);
+
+  container.innerHTML = PIPELINE_STEPS.map((s, idx) => {
+    const stepNum = idx + 1;
+    let cls = "chk-step";
+    let icon = `<span class="chk-icon" style="color:#64748b">⏳</span>`;
+    let detailTxt = "";
+
+    if (stepNum < currentIdx) {
+      cls += " done";
+      icon = `<span class="chk-icon" style="color:#4ade80">✅</span>`;
+    } else if (stepNum === currentIdx || (currentStage === "queued" && stepNum === 1)) {
+      cls += " active";
+      icon = `<span class="chk-icon" style="color:#c084fc">⚡</span>`;
+      if (s.id === "animate" && sd && sd.scene && sd.total) {
+        detailTxt = ` <small style="color:#e9d5ff">(${sd.scene}/${sd.total})</small>`;
+      }
+    }
+
+    return `
+      <div class="${cls}">
+        ${icon}
+        <span>${s.name}${detailTxt}</span>
+      </div>
+    `;
+  }).join("");
 }
 
 const TERMINAL_STATUSES = ["done", "failed", "canceled", "rejected"];
