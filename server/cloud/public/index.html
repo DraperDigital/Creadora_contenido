@@ -30,9 +30,18 @@
     .dashboard-layout { grid-template-columns: 1fr; }
   }
   .checklist-container { display: flex; flex-direction: column; gap: 0.55rem; }
-  .chk-step { display: flex; align-items: center; gap: 0.65rem; padding: 0.7rem 0.9rem; background: rgba(10, 11, 16, 0.5); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; font-size: 0.82rem; color: #94a3b8; transition: all 0.25s ease; font-weight: 500; }
+  .chk-step { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0.85rem; background: rgba(10, 11, 16, 0.5); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; font-size: 0.82rem; color: #94a3b8; transition: all 0.25s ease; font-weight: 500; }
   .chk-step.done { background: rgba(34, 197, 94, 0.08); border-color: rgba(34, 197, 94, 0.25); color: #bbf7d0; font-weight: 600; }
   .chk-step.active { background: rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.45); color: #ffffff; font-weight: 700; box-shadow: 0 0 20px rgba(168, 85, 247, 0.2); }
+  .chk-step-info { display: flex; flex-direction: column; gap: 0.1rem; flex: 1; min-width: 0; }
+  .chk-step-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .chk-ring-wrap { position: relative; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .chk-ring-svg { width: 34px; height: 34px; transform: rotate(-90deg); transform-origin: center; }
+  .chk-ring-bg { stroke: rgba(255, 255, 255, 0.08); fill: transparent; stroke-width: 2.8; }
+  .chk-ring-fg { fill: transparent; stroke-width: 2.8; stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; }
+  .chk-ring-text { position: absolute; font-size: 0.56rem; font-weight: 800; text-align: center; line-height: 1; letter-spacing: -0.02em; }
+  .chk-step.active .chk-ring-svg.pulse { filter: drop-shadow(0 0 5px rgba(192, 132, 252, 0.6)); }
   .chk-icon { font-size: 0.9rem; flex: 0 0 18px; text-align: center; }
   .login-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; width: 100%; }
 
@@ -1519,6 +1528,39 @@ function updateActiveVideoSummary(j) {
   timeEl.textContent = timeCell(j);
 }
 
+function renderStepRing(pct, stateClass, pulse = false) {
+  const r = 13;
+  const c = 81.68;
+  const clampedPct = Math.max(0, Math.min(100, Math.round(pct)));
+  const offset = c - (clampedPct / 100) * c;
+
+  let strokeColor = "rgba(255, 255, 255, 0.14)";
+  let textColor = "#64748b";
+
+  if (stateClass === "done") {
+    strokeColor = "#4ade80";
+    textColor = "#4ade80";
+  } else if (stateClass === "active") {
+    strokeColor = "#c084fc";
+    textColor = "#f3e8ff";
+  }
+
+  const labelText = stateClass === "done" ? "100%" : (stateClass === "active" ? `${clampedPct}%` : "0%");
+
+  return `
+    <div class="chk-ring-wrap">
+      <svg class="chk-ring-svg ${pulse ? 'pulse' : ''}" width="34" height="34" viewBox="0 0 34 34">
+        <circle class="chk-ring-bg" cx="17" cy="17" r="13" />
+        <circle class="chk-ring-fg" cx="17" cy="17" r="13"
+          stroke="${strokeColor}"
+          stroke-dasharray="${c.toFixed(2)}"
+          stroke-dashoffset="${offset.toFixed(2)}" />
+      </svg>
+      <span class="chk-ring-text" style="color:${textColor}">${labelText}</span>
+    </div>
+  `;
+}
+
 function renderPipelineChecklist(jobs) {
   const container = $("pipelineChecklist");
   const badge = $("liveBadge");
@@ -1540,8 +1582,10 @@ function renderPipelineChecklist(jobs) {
       }
       container.innerHTML = PIPELINE_STEPS.map((s) => `
         <div class="chk-step done">
-          <span class="chk-icon" style="color:#4ade80">✅</span>
-          <span>${s.name}</span>
+          ${renderStepRing(100, "done")}
+          <div class="chk-step-info">
+            <span class="chk-step-title">${s.name}</span>
+          </div>
         </div>
       `).join("");
       return;
@@ -1551,8 +1595,10 @@ function renderPipelineChecklist(jobs) {
     badge.textContent = "En espera";
     container.innerHTML = PIPELINE_STEPS.map((s) => `
       <div class="chk-step">
-        <span class="chk-icon" style="color:#64748b">⏳</span>
-        <span>${s.name}</span>
+        ${renderStepRing(0, "pending")}
+        <div class="chk-step-info">
+          <span class="chk-step-title">${s.name}</span>
+        </div>
       </div>
     `).join("");
     return;
@@ -1572,24 +1618,41 @@ function renderPipelineChecklist(jobs) {
   container.innerHTML = PIPELINE_STEPS.map((s, idx) => {
     const stepNum = idx + 1;
     let cls = "chk-step";
-    let icon = `<span class="chk-icon" style="color:#64748b">⏳</span>`;
+    let stateClass = "pending";
+    let pct = 0;
     let detailTxt = "";
 
     if (stepNum < currentIdx) {
       cls += " done";
-      icon = `<span class="chk-icon" style="color:#4ade80">✅</span>`;
+      stateClass = "done";
+      pct = 100;
     } else if (stepNum === currentIdx || (currentIdx === 0 && stepNum === 1)) {
       cls += " active";
-      icon = `<span class="chk-icon" style="color:#c084fc">⚡</span>`;
+      stateClass = "active";
       if (s.id === "animate" && sd && sd.scene && sd.total) {
-        detailTxt = ` <small style="color:#e9d5ff">(${sd.scene}/${sd.total})</small>`;
+        pct = Math.round((sd.scene / sd.total) * 100);
+        detailTxt = `(${sd.scene}/${sd.total} escenas)`;
+      } else if (sd && sd.pct !== undefined) {
+        pct = Math.round(sd.pct);
+      } else if (sd && sd.progress_pct !== undefined) {
+        pct = Math.round(sd.progress_pct);
+      } else if (activeJob.pct !== undefined) {
+        const stepStart = (stepNum - 1) * 12.5;
+        const stepRange = 12.5;
+        const rawPct = ((activeJob.pct - stepStart) / stepRange) * 100;
+        pct = Math.min(99, Math.max(15, Math.round(rawPct)));
+      } else {
+        pct = 50;
       }
     }
 
     return `
       <div class="${cls}">
-        ${icon}
-        <span>${s.name}${detailTxt}</span>
+        ${renderStepRing(pct, stateClass, stateClass === "active")}
+        <div class="chk-step-info">
+          <span class="chk-step-title">${s.name}</span>
+          ${detailTxt ? `<span style="font-size:0.72rem;color:#e9d5ff">${detailTxt}</span>` : ""}
+        </div>
       </div>
     `;
   }).join("");
